@@ -119,6 +119,10 @@
 # include <openssl/fips.h>
 #endif
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssllog.h>
+#endif
+
 static const SSL_METHOD *ssl23_get_server_method(int ver);
 int ssl23_get_client_hello(SSL *s);
 static const SSL_METHOD *ssl23_get_server_method(int ver)
@@ -156,6 +160,10 @@ int ssl23_accept(SSL *s)
     RAND_add(&Time, sizeof(Time), 0);
     ERR_clear_error();
     clear_sys_error();
+
+#ifdef GRANDSTREAM_NETWORKS
+    ssllog(LOG_NOT, "%s enter ...\n", __FUNCTION__);
+#endif
 
     if (s->info_callback != NULL)
         cb = s->info_callback;

@@ -165,6 +165,10 @@
 # include <openssl/ssl.h>
 # include <openssl/symhacks.h>
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssllog.h>
+#endif
+
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN
 #  define OPENSSL_EXTERN OPENSSL_EXPORT
@@ -974,6 +978,7 @@ const SSL_METHOD *func_name(void)  \
         ssl3_callback_ctrl, \
         ssl3_ctx_callback_ctrl, \
         }; \
+        ssllog(LOG_VEB, "%s enter ...\n", __FUNCTION__); \
         return &func_name##_data; \
         }
 

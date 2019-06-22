@@ -159,6 +159,10 @@
 # define APPS_WIN16
 #endif
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssllog.h>
+#endif
+
 /* conflicts with winsock2 stuff on netware */
 #if !defined(OPENSSL_SYS_NETWARE)
 # include <sys/types.h>
@@ -1915,7 +1919,11 @@ int MAIN(int argc, char *argv[])
         if (dh != NULL) {
             BIO_printf(bio_s_out, "Setting temp DH parameters\n");
         } else {
+#ifdef GRANDSTREAM_NETWORKS
+			ssllog(LOG_DEB, "Using default temp DH parameters\n");
+#else
             BIO_printf(bio_s_out, "Using default temp DH parameters\n");
+#endif
             dh = get_dh2048();
             if (dh == NULL) {
                 ERR_print_errors(bio_err);
@@ -2066,7 +2074,11 @@ int MAIN(int argc, char *argv[])
 #endif
     }
 
+#ifdef GRANDSTREAM_NETWORKS
+	ssllog(LOG_DEB, "ACCEPT\n");
+#else
     BIO_printf(bio_s_out, "ACCEPT\n");
+#endif
     (void)BIO_flush(bio_s_out);
     if (rev)
         do_server(port, socket_type, &accept_socket, rev_body, context,
@@ -2150,6 +2162,32 @@ int MAIN(int argc, char *argv[])
 
 static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
 {
+#ifdef GRANDSTREAM_NETWORKS
+    ssllog(LOG_NOT, "%4ld items in the session cache\n",
+               SSL_CTX_sess_number(ssl_ctx));
+    ssllog(LOG_NOT, "%4ld client connects (SSL_connect())\n",
+               SSL_CTX_sess_connect(ssl_ctx));
+    ssllog(LOG_NOT, "%4ld client renegotiates (SSL_connect())\n",
+               SSL_CTX_sess_connect_renegotiate(ssl_ctx));
+    ssllog(LOG_NOT, "%4ld client connects that finished\n",
+               SSL_CTX_sess_connect_good(ssl_ctx));
+    ssllog(LOG_NOT, "%4ld server accepts (SSL_accept())\n",
+               SSL_CTX_sess_accept(ssl_ctx));
+    ssllog(LOG_NOT, "%4ld server renegotiates (SSL_accept())\n",
+               SSL_CTX_sess_accept_renegotiate(ssl_ctx));
+    ssllog(LOG_NOT, "%4ld server accepts that finished\n",
+               SSL_CTX_sess_accept_good(ssl_ctx));
+    ssllog(LOG_NOT, "%4ld session cache hits\n", SSL_CTX_sess_hits(ssl_ctx));
+    ssllog(LOG_NOT, "%4ld session cache misses\n",
+               SSL_CTX_sess_misses(ssl_ctx));
+    ssllog(LOG_NOT, "%4ld session cache timeouts\n",
+               SSL_CTX_sess_timeouts(ssl_ctx));
+    ssllog(LOG_NOT, "%4ld callback cache hits\n",
+               SSL_CTX_sess_cb_hits(ssl_ctx));
+    ssllog(LOG_NOT, "%4ld cache full overflows (%ld allowed)\n",
+               SSL_CTX_sess_cache_full(ssl_ctx),
+               SSL_CTX_sess_get_cache_size(ssl_ctx));
+#else
     BIO_printf(bio, "%4ld items in the session cache\n",
                SSL_CTX_sess_number(ssl_ctx));
     BIO_printf(bio, "%4ld client connects (SSL_connect())\n",
@@ -2174,6 +2212,7 @@ static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
     BIO_printf(bio, "%4ld cache full overflows (%ld allowed)\n",
                SSL_CTX_sess_cache_full(ssl_ctx),
                SSL_CTX_sess_get_cache_size(ssl_ctx));
+#endif
 }
 
 static int sv_body(int s, int stype, unsigned char *context)

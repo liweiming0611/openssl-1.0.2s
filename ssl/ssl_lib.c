@@ -1064,6 +1064,10 @@ int SSL_shutdown(SSL *s)
      * (see ssl3_shutdown).
      */
 
+#ifdef GRANDSTREAM_NETWORKS
+    ssllog(LOG_NOT, "%s enter ...\n", __FUNCTION__);
+#endif
+
     if (s->handshake_func == 0) {
         SSLerr(SSL_F_SSL_SHUTDOWN, SSL_R_UNINITIALIZED);
         return -1;

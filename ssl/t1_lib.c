@@ -122,6 +122,10 @@
 #include <openssl/rand.h>
 #include "ssl_locl.h"
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssllog.h>
+#endif
+
 const char tls1_version_str[] = "TLSv1" OPENSSL_VERSION_PTEXT;
 
 #ifndef OPENSSL_NO_TLSEXT
@@ -212,6 +216,10 @@ int tls1_new(SSL *s)
 
 void tls1_free(SSL *s)
 {
+#ifdef GRANDSTREAM_NETWORKS
+    ssllog(LOG_NOT, "%s enter ...\n", __FUNCTION__);
+#endif
+
 #ifndef OPENSSL_NO_TLSEXT
     if (s->tlsext_session_ticket) {
         OPENSSL_free(s->tlsext_session_ticket);

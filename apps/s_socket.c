@@ -64,6 +64,10 @@
 #include <errno.h>
 #include <signal.h>
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssllog.h>
+#endif
+
 #ifdef FLAT_INC
 # include "e_os2.h"
 #else
@@ -299,6 +303,10 @@ int do_server(int port, int type, int *ret,
 
     if (!init_server(&accept_socket, port, type))
         return (0);
+
+#ifdef GRANDSTREAM_NETWORKS
+    ssllog(LOG_NOT, "Server socket: %d, port: %d\n", accept_socket, port);
+#endif
 
     if (ret != NULL) {
         *ret = accept_socket;

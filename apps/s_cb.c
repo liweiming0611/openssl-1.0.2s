@@ -123,6 +123,10 @@
 #include <openssl/ssl.h>
 #include "s_apps.h"
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssllog.h>
+#endif
+
 #define COOKIE_SECRET_LENGTH    16
 
 int verify_depth = 0;
@@ -574,20 +578,39 @@ void MS_CALLBACK apps_ssl_info_callback(const SSL *s, int where, int ret)
         str = "undefined";
 
     if (where & SSL_CB_LOOP) {
+#ifdef GRANDSTREAM_NETWORKS
+        ssllog(LOG_DEB, "%s:%s\n", str, SSL_state_string_long(s));
+#else
         BIO_printf(bio_err, "%s:%s\n", str, SSL_state_string_long(s));
+#endif
     } else if (where & SSL_CB_ALERT) {
         str = (where & SSL_CB_READ) ? "read" : "write";
+#ifdef GRANDSTREAM_NETWORKS
+        ssllog(LOG_DEB, "SSL3 alert %s:%s:%s\n", str,
+                   SSL_alert_type_string_long(ret),
+                   SSL_alert_desc_string_long(ret));
+#else
         BIO_printf(bio_err, "SSL3 alert %s:%s:%s\n",
                    str,
                    SSL_alert_type_string_long(ret),
                    SSL_alert_desc_string_long(ret));
+#endif
     } else if (where & SSL_CB_EXIT) {
-        if (ret == 0)
+        if (ret == 0) {
+#ifdef GRANDSTREAM_NETWORKS
+            ssllog(LOG_ERR, "%s:failed in %s\n", str, SSL_state_string_long(s));
+#else
             BIO_printf(bio_err, "%s:failed in %s\n",
                        str, SSL_state_string_long(s));
+#endif
+        }
         else if (ret < 0) {
+#ifdef GRANDSTREAM_NETWORKS
+            ssllog(LOG_ERR, "%s:error in %s\n", str, SSL_state_string_long(s));
+#else
             BIO_printf(bio_err, "%s:error in %s\n",
                        str, SSL_state_string_long(s));
+#endif
         }
     }
 }
@@ -867,9 +890,15 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type,
 #endif
     }
 
+#ifdef GRANDSTREAM_NETWORKS
+	ssllog(LOG_DEB, "\n%s %s%s [length %04lx]%s%s\n", str_write_p, str_version,
+               str_content_type, (unsigned long)len, str_details1,
+               str_details2);
+#else
     BIO_printf(bio, "%s %s%s [length %04lx]%s%s\n", str_write_p, str_version,
                str_content_type, (unsigned long)len, str_details1,
                str_details2);
+#endif
 
     if (len > 0) {
         size_t num, i;
