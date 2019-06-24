@@ -286,7 +286,13 @@ int ssl23_get_client_hello(SSL *s)
         memcpy(buf, p, n);
 
 #ifdef GRANDSTREAM_NETWORKS
-        ssllog(LOG_NOT, "p[0] & 0x80: %d, p[2]: %d, p: %s, n: %d\n", p[0] & 0x80, p[2], p, n);
+        char strbuf[128] = {0};
+        int strbufi = 0;
+        int strbuflen = 0;
+        for (strbufi = 0; strbufi < n; strbufi++) {
+            strbuflen += snprintf(strbuf + strbuflen, sizeof(strbuf) - strbuflen - 1, "0x%02x ", p[strbufi]);
+        }
+        ssllog(LOG_NOT, "n: %d, data: %s\n", n, strbuf);
 #endif
         if ((p[0] & 0x80) && (p[2] == SSL2_MT_CLIENT_HELLO)) {
             /*
