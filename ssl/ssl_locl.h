@@ -978,7 +978,7 @@ const SSL_METHOD *func_name(void)  \
         ssl3_callback_ctrl, \
         ssl3_ctx_callback_ctrl, \
         }; \
-        ssllog(LOG_VEB, "%s enter ...\n", __FUNCTION__); \
+        ssllog(SSL_LOG_VEB, "%s enter ...\n", __FUNCTION__); \
         return &func_name##_data; \
         }
 

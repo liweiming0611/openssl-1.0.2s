@@ -1920,7 +1920,7 @@ int MAIN(int argc, char *argv[])
             BIO_printf(bio_s_out, "Setting temp DH parameters\n");
         } else {
 #ifdef GRANDSTREAM_NETWORKS
-			ssllog(LOG_DEB, "Using default temp DH parameters\n");
+			ssllog(SSL_LOG_DEB, "Using default temp DH parameters\n");
 #else
             BIO_printf(bio_s_out, "Using default temp DH parameters\n");
 #endif
@@ -2075,7 +2075,7 @@ int MAIN(int argc, char *argv[])
     }
 
 #ifdef GRANDSTREAM_NETWORKS
-	ssllog(LOG_DEB, "ACCEPT\n");
+	ssllog(SSL_LOG_DEB, "ACCEPT\n");
 #else
     BIO_printf(bio_s_out, "ACCEPT\n");
 #endif
@@ -2163,28 +2163,28 @@ int MAIN(int argc, char *argv[])
 static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
 {
 #ifdef GRANDSTREAM_NETWORKS
-    ssllog(LOG_NOT, "%4ld items in the session cache\n",
+    ssllog(SSL_LOG_NOT, "%4ld items in the session cache\n",
                SSL_CTX_sess_number(ssl_ctx));
-    ssllog(LOG_NOT, "%4ld client connects (SSL_connect())\n",
+    ssllog(SSL_LOG_NOT, "%4ld client connects (SSL_connect())\n",
                SSL_CTX_sess_connect(ssl_ctx));
-    ssllog(LOG_NOT, "%4ld client renegotiates (SSL_connect())\n",
+    ssllog(SSL_LOG_NOT, "%4ld client renegotiates (SSL_connect())\n",
                SSL_CTX_sess_connect_renegotiate(ssl_ctx));
-    ssllog(LOG_NOT, "%4ld client connects that finished\n",
+    ssllog(SSL_LOG_NOT, "%4ld client connects that finished\n",
                SSL_CTX_sess_connect_good(ssl_ctx));
-    ssllog(LOG_NOT, "%4ld server accepts (SSL_accept())\n",
+    ssllog(SSL_LOG_NOT, "%4ld server accepts (SSL_accept())\n",
                SSL_CTX_sess_accept(ssl_ctx));
-    ssllog(LOG_NOT, "%4ld server renegotiates (SSL_accept())\n",
+    ssllog(SSL_LOG_NOT, "%4ld server renegotiates (SSL_accept())\n",
                SSL_CTX_sess_accept_renegotiate(ssl_ctx));
-    ssllog(LOG_NOT, "%4ld server accepts that finished\n",
+    ssllog(SSL_LOG_NOT, "%4ld server accepts that finished\n",
                SSL_CTX_sess_accept_good(ssl_ctx));
-    ssllog(LOG_NOT, "%4ld session cache hits\n", SSL_CTX_sess_hits(ssl_ctx));
-    ssllog(LOG_NOT, "%4ld session cache misses\n",
+    ssllog(SSL_LOG_NOT, "%4ld session cache hits\n", SSL_CTX_sess_hits(ssl_ctx));
+    ssllog(SSL_LOG_NOT, "%4ld session cache misses\n",
                SSL_CTX_sess_misses(ssl_ctx));
-    ssllog(LOG_NOT, "%4ld session cache timeouts\n",
+    ssllog(SSL_LOG_NOT, "%4ld session cache timeouts\n",
                SSL_CTX_sess_timeouts(ssl_ctx));
-    ssllog(LOG_NOT, "%4ld callback cache hits\n",
+    ssllog(SSL_LOG_NOT, "%4ld callback cache hits\n",
                SSL_CTX_sess_cb_hits(ssl_ctx));
-    ssllog(LOG_NOT, "%4ld cache full overflows (%ld allowed)\n",
+    ssllog(SSL_LOG_NOT, "%4ld cache full overflows (%ld allowed)\n",
                SSL_CTX_sess_cache_full(ssl_ctx),
                SSL_CTX_sess_get_cache_size(ssl_ctx));
 #else

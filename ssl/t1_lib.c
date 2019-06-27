@@ -217,7 +217,7 @@ int tls1_new(SSL *s)
 void tls1_free(SSL *s)
 {
 #ifdef GRANDSTREAM_NETWORKS
-    ssllog(LOG_NOT, "%s enter ...\n", __FUNCTION__);
+    ssllog(SSL_LOG_NOT, "%s enter ...\n", __FUNCTION__);
 #endif
 
 #ifndef OPENSSL_NO_TLSEXT

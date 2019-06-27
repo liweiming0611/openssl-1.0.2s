@@ -305,7 +305,7 @@ int do_server(int port, int type, int *ret,
         return (0);
 
 #ifdef GRANDSTREAM_NETWORKS
-    ssllog(LOG_NOT, "Server socket: %d, port: %d\n", accept_socket, port);
+    ssllog(SSL_LOG_NOT, "Server socket: %d, port: %d\n", accept_socket, port);
 #endif
 
     if (ret != NULL) {

@@ -167,7 +167,7 @@ int ssl23_accept(SSL *s)
         cb = s->ctx->info_callback;
 
 #ifdef GRANDSTREAM_NETWORKS
-    ssllog(LOG_NOT, "%s enter ...\n", __FUNCTION__);
+    ssllog(SSL_LOG_NOT, "%s enter ...\n", __FUNCTION__);
 #endif
 
     s->in_handshake++;
@@ -218,7 +218,7 @@ int ssl23_accept(SSL *s)
 
             s->shutdown = 0;
             ret = ssl23_get_client_hello(s);
-            ssllog(LOG_NOT, "===========ret: %d\n", ret);
+            ssllog(SSL_LOG_NOT, "===========ret: %d\n", ret);
             if (ret >= 0)
                 cb = NULL;
             goto end;
@@ -292,7 +292,7 @@ int ssl23_get_client_hello(SSL *s)
         for (strbufi = 0; strbufi < n; strbufi++) {
             strbuflen += snprintf(strbuf + strbuflen, sizeof(strbuf) - strbuflen - 1, "0x%02x ", p[strbufi]);
         }
-        ssllog(LOG_NOT, "n: %d, data: %s\n", n, strbuf);
+        ssllog(SSL_LOG_NOT, "n: %d, data: %s\n", n, strbuf);
 #endif
         if ((p[0] & 0x80) && (p[2] == SSL2_MT_CLIENT_HELLO)) {
             /*
