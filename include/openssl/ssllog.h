@@ -67,7 +67,7 @@ static inline void __ssllog(int level, const char *file, int line, const char *f
     gettimeofday(&tv_now, NULL);
 
     fprintf(stderr, "[%4d-%02d-%02d %02d:%02d:%02d:%03ld] %s [%05ld]   -- %s:%d  %s",
-        t->tm_year+1900, t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, tv_now.tv_usec / 1000,
+        t->tm_year+1900, t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, tv_now.tv_usec,
         level_str, syscall(SYS_gettid), file_name ? ++file_name : file, line, log_buffer);
 }
 
