@@ -2,7 +2,7 @@
 
 export ROOTDIR=$(cd `dirname $0`; pwd)
 
-export INSTALLPREFIX=/opt/openssl
+export INSTALLPREFIX=/data/openssl
 
 export CFLAGS=" \
     -g \

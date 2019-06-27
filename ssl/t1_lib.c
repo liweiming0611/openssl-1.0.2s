@@ -123,7 +123,7 @@
 #include "ssl_locl.h"
 
 #ifdef GRANDSTREAM_NETWORKS
-#include <openssl/ssllog.h>
+#include <openssl/ssl_log.h>
 #endif
 
 const char tls1_version_str[] = "TLSv1" OPENSSL_VERSION_PTEXT;
@@ -217,7 +217,7 @@ int tls1_new(SSL *s)
 void tls1_free(SSL *s)
 {
 #ifdef GRANDSTREAM_NETWORKS
-    ssllog(SSL_LOG_NOT, "%s enter ...\n", __FUNCTION__);
+    ssl_log(SSL_LOG_NOT, "%s enter ...\n", __FUNCTION__);
 #endif
 
 #ifndef OPENSSL_NO_TLSEXT

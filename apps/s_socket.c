@@ -65,7 +65,7 @@
 #include <signal.h>
 
 #ifdef GRANDSTREAM_NETWORKS
-#include <openssl/ssllog.h>
+#include <openssl/ssl_log.h>
 #endif
 
 #ifdef FLAT_INC
@@ -305,7 +305,7 @@ int do_server(int port, int type, int *ret,
         return (0);
 
 #ifdef GRANDSTREAM_NETWORKS
-    ssllog(SSL_LOG_NOT, "Server socket: %d, port: %d\n", accept_socket, port);
+    ssl_log(SSL_LOG_NOT, "Server socket: %d, port: %d\n", accept_socket, port);
 #endif
 
     if (ret != NULL) {

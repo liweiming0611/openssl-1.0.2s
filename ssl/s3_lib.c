@@ -3663,7 +3663,7 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
         if (!ssl_cert_inst(&s->cert)) {
             SSLerr(SSL_F_SSL3_CALLBACK_CTRL, ERR_R_MALLOC_FAILURE);
 #ifdef GRANDSTREAM_NETWORKS
-            ssllog(LOG_WAR, "%s return!\n", __FUNCTION__);
+            ssl_log(SSL_LOG_WAR, "%s return!\n", __FUNCTION__);
 #endif
             return (0);
         }
@@ -3671,7 +3671,7 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
 #endif
 
 #ifdef GRANDSTREAM_NETWORKS
-    ssllog(LOG_WAR, "%s enter, cmd: %d!\n", __FUNCTION__, cmd);
+    ssl_log(SSL_LOG_WAR, "%s enter, cmd: %d!\n", __FUNCTION__, cmd);
 #endif
 
     switch (cmd) {
@@ -3988,7 +3988,7 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
     cert = ctx->cert;
 
 #ifdef GRANDSTREAM_NETWORKS
-    ssllog(LOG_WAR, "%s enter, cmd: %d!\n", __FUNCTION__, cmd);
+    ssl_log(SSL_LOG_WAR, "%s enter, cmd: %d!\n", __FUNCTION__, cmd);
 #endif
 
     switch (cmd) {

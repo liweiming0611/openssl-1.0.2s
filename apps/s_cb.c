@@ -124,7 +124,7 @@
 #include "s_apps.h"
 
 #ifdef GRANDSTREAM_NETWORKS
-#include <openssl/ssllog.h>
+#include <openssl/ssl_log.h>
 #endif
 
 #define COOKIE_SECRET_LENGTH    16
@@ -579,14 +579,14 @@ void MS_CALLBACK apps_ssl_info_callback(const SSL *s, int where, int ret)
 
     if (where & SSL_CB_LOOP) {
 #ifdef GRANDSTREAM_NETWORKS
-        ssllog(SSL_LOG_DEB, "%s:%s\n", str, SSL_state_string_long(s));
+        ssl_log(SSL_LOG_DEB, "%s:%s\n", str, SSL_state_string_long(s));
 #else
         BIO_printf(bio_err, "%s:%s\n", str, SSL_state_string_long(s));
 #endif
     } else if (where & SSL_CB_ALERT) {
         str = (where & SSL_CB_READ) ? "read" : "write";
 #ifdef GRANDSTREAM_NETWORKS
-        ssllog(SSL_LOG_DEB, "SSL3 alert %s:%s:%s\n", str,
+        ssl_log(SSL_LOG_DEB, "SSL3 alert %s:%s:%s\n", str,
                    SSL_alert_type_string_long(ret),
                    SSL_alert_desc_string_long(ret));
 #else
@@ -598,7 +598,7 @@ void MS_CALLBACK apps_ssl_info_callback(const SSL *s, int where, int ret)
     } else if (where & SSL_CB_EXIT) {
         if (ret == 0) {
 #ifdef GRANDSTREAM_NETWORKS
-            ssllog(LOG_ERR, "%s:failed in %s\n", str, SSL_state_string_long(s));
+            ssl_log(SSL_LOG_ERR, "%s:failed in %s\n", str, SSL_state_string_long(s));
 #else
             BIO_printf(bio_err, "%s:failed in %s\n",
                        str, SSL_state_string_long(s));
@@ -606,7 +606,7 @@ void MS_CALLBACK apps_ssl_info_callback(const SSL *s, int where, int ret)
         }
         else if (ret < 0) {
 #ifdef GRANDSTREAM_NETWORKS
-            ssllog(LOG_ERR, "%s:error in %s\n", str, SSL_state_string_long(s));
+            ssl_log(SSL_LOG_ERR, "%s:error in %s\n", str, SSL_state_string_long(s));
 #else
             BIO_printf(bio_err, "%s:error in %s\n",
                        str, SSL_state_string_long(s));
@@ -891,7 +891,7 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type,
     }
 
 #ifdef GRANDSTREAM_NETWORKS
-	ssllog(SSL_LOG_DEB, "\n%s %s%s [length %04lx]%s%s\n", str_write_p, str_version,
+	ssl_log(SSL_LOG_DEB, "\n%s %s%s [length %04lx]%s%s\n", str_write_p, str_version,
                str_content_type, (unsigned long)len, str_details1,
                str_details2);
 #else

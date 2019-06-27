@@ -120,7 +120,7 @@
 #endif
 
 #ifdef GRANDSTREAM_NETWORKS
-#include <openssl/ssllog.h>
+#include <openssl/ssl_log.h>
 #endif
 
 static const SSL_METHOD *ssl23_get_server_method(int ver);
@@ -167,7 +167,7 @@ int ssl23_accept(SSL *s)
         cb = s->ctx->info_callback;
 
 #ifdef GRANDSTREAM_NETWORKS
-    ssllog(SSL_LOG_NOT, "%s enter ...\n", __FUNCTION__);
+    ssl_log(SSL_LOG_NOT, "%s enter ...\n", __FUNCTION__);
 #endif
 
     s->in_handshake++;
@@ -218,7 +218,6 @@ int ssl23_accept(SSL *s)
 
             s->shutdown = 0;
             ret = ssl23_get_client_hello(s);
-            ssllog(SSL_LOG_NOT, "===========ret: %d\n", ret);
             if (ret >= 0)
                 cb = NULL;
             goto end;
@@ -292,7 +291,7 @@ int ssl23_get_client_hello(SSL *s)
         for (strbufi = 0; strbufi < n; strbufi++) {
             strbuflen += snprintf(strbuf + strbuflen, sizeof(strbuf) - strbuflen - 1, "0x%02x ", p[strbufi]);
         }
-        ssllog(SSL_LOG_NOT, "n: %d, data: %s\n", n, strbuf);
+        ssl_log(SSL_LOG_NOT, "n: %d, data: %s\n", n, strbuf);
 #endif
         if ((p[0] & 0x80) && (p[2] == SSL2_MT_CLIENT_HELLO)) {
             /*
@@ -367,7 +366,7 @@ int ssl23_get_client_hello(SSL *s)
              */
             if (p[3] == 0 && p[4] < 6) {
 #ifdef GRANDSTREAM_NETWORKS
-                ssllog(LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
+                ssl_log(SSL_LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
 #endif
                 SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_RECORD_TOO_SMALL);
                 goto err;
@@ -416,14 +415,14 @@ int ssl23_get_client_hello(SSL *s)
                    (strncmp("HEAD ", (char *)p, 5) == 0) ||
                    (strncmp("PUT ", (char *)p, 4) == 0)) {
 #ifdef GRANDSTREAM_NETWORKS
-            ssllog(LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO, p: %s\n", p);
+            ssl_log(SSL_LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO, p: %s\n", p);
 #endif
 
             SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_HTTP_REQUEST);
             goto err;
         } else if (strncmp("CONNECT", (char *)p, 7) == 0) {
 #ifdef GRANDSTREAM_NETWORKS
-            ssllog(LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
+            ssl_log(SSL_LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
 #endif
 
             SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_HTTPS_PROXY_REQUEST);
@@ -436,7 +435,7 @@ int ssl23_get_client_hello(SSL *s)
 
     if (s->version < TLS1_2_VERSION && tls1_suiteb(s)) {
 #ifdef GRANDSTREAM_NETWORKS
-        ssllog(LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
+        ssl_log(SSL_LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
 #endif
 
         SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,
@@ -446,7 +445,7 @@ int ssl23_get_client_hello(SSL *s)
 #ifdef OPENSSL_FIPS
     if (FIPS_mode() && (s->version < TLS1_VERSION)) {
 #ifdef GRANDSTREAM_NETWORKS
-        ssllog(LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
+        ssl_log(LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
 #endif
 
         SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,
@@ -482,7 +481,7 @@ int ssl23_get_client_hello(SSL *s)
         n = ((p[0] & 0x7f) << 8) | p[1];
         if (n > (1024 * 4)) {
 #ifdef GRANDSTREAM_NETWORKS
-            ssllog(LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
+            ssl_log(SSL_LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
 #endif
 
             SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_RECORD_TOO_LARGE);
@@ -490,7 +489,7 @@ int ssl23_get_client_hello(SSL *s)
         }
         if (n < 9) {
 #ifdef GRANDSTREAM_NETWORKS
-            ssllog(LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
+            ssl_log(SSL_LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
 #endif
 
             SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,
@@ -528,7 +527,7 @@ int ssl23_get_client_hello(SSL *s)
                                                           * be * '>'
                                                           * otherweise */
 #ifdef GRANDSTREAM_NETWORKS
-            ssllog(LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
+            ssl_log(SSL_LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
 #endif
 
             SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,
@@ -596,7 +595,7 @@ int ssl23_get_client_hello(SSL *s)
     if (type == 1) {
 #ifdef OPENSSL_NO_SSL2
 #ifdef GRANDSTREAM_NETWORKS
-        ssllog(LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
+        ssl_log(SSL_LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
 #endif
 
         SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_UNSUPPORTED_PROTOCOL);
@@ -656,7 +655,7 @@ int ssl23_get_client_hello(SSL *s)
         new_method = ssl23_get_server_method(s->version);
         if (new_method == NULL) {
 #ifdef GRANDSTREAM_NETWORKS
-            ssllog(LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
+            ssl_log(SSL_LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
 #endif
 
             SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_UNSUPPORTED_PROTOCOL);
@@ -698,7 +697,7 @@ int ssl23_get_client_hello(SSL *s)
     if ((type < 1) || (type > 3)) {
         /* bad, very bad */
 #ifdef GRANDSTREAM_NETWORKS
-        ssllog(LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
+        ssl_log(SSL_LOG_ERR, "SSL_F_SSL23_GET_CLIENT_HELLO ...\n");
 #endif
         SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_UNKNOWN_PROTOCOL);
         goto err;

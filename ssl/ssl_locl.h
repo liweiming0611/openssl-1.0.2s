@@ -166,7 +166,7 @@
 # include <openssl/symhacks.h>
 
 #ifdef GRANDSTREAM_NETWORKS
-#include <openssl/ssllog.h>
+#include <openssl/ssl_log.h>
 #endif
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
@@ -978,7 +978,7 @@ const SSL_METHOD *func_name(void)  \
         ssl3_callback_ctrl, \
         ssl3_ctx_callback_ctrl, \
         }; \
-        ssllog(SSL_LOG_VEB, "%s enter ...\n", __FUNCTION__); \
+        ssl_log(SSL_LOG_VEB, "%s enter ...\n", __FUNCTION__); \
         return &func_name##_data; \
         }
 

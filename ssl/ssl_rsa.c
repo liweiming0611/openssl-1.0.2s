@@ -65,7 +65,7 @@
 #include <openssl/pem.h>
 
 #ifdef GRANDSTREAM_NETWORKS
-#include <openssl/ssllog.h>
+#include <openssl/ssl_log.h>
 #endif
 
 static int ssl_set_cert(CERT *c, X509 *x509);
