@@ -167,6 +167,10 @@
 # include <openssl/engine.h>
 #endif
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssl_log.h>
+#endif
+
 static int ca_dn_cmp(const X509_NAME *const *a, const X509_NAME *const *b);
 #ifndef OPENSSL_NO_TLSEXT
 static int ssl3_check_finished(SSL *s);
@@ -700,6 +704,10 @@ int ssl3_client_hello(SSL *s)
             (!sess->session_id_length && !sess->tlsext_tick) ||
 #endif
             (sess->not_resumable)) {
+#ifdef GRANDSTREAM_NETWORKS
+            ssl_log(SSL_LOG_DEB, "ssl_get_new_session enter ...\n");
+#endif
+
             if (!ssl_get_new_session(s, 0))
                 goto err;
         }
@@ -1040,6 +1048,10 @@ int ssl3_get_server_hello(SSL *s)
          * overwritten if the server refuses resumption.
          */
         if (s->session->session_id_length > 0) {
+#ifdef GRANDSTREAM_NETWORKS
+            ssl_log(SSL_LOG_DEB, "ssl_get_new_session enter ...\n");
+#endif
+
             if (!ssl_get_new_session(s, 0)) {
                 goto f_err;
             }

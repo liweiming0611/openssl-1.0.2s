@@ -41,7 +41,7 @@ void openssl_log_vsprintf(int level, const char *file, int line, const char *for
 
 int openssl_init(void);
 int openssl_load_cert_file(SSL_CTX *ctx);
-SSL_CTX *openssl_ctx_new_session(const SSL_METHOD *method);
+SSL_CTX *openssl_ctx_new(const SSL_METHOD *method);
 SSL *openssl_ssl_new(SSL_CTX *ctx);
 int openssl_set_fd(SSL *ssl, int sockfd);
 int openssl_accept(SSL *ssl);

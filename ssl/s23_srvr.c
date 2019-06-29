@@ -161,13 +161,17 @@ int ssl23_accept(SSL *s)
     ERR_clear_error();
     clear_sys_error();
 
+#ifdef GRANDSTREAM_NETWORKS
+    char state_buffer[128] = {0};
+#endif
+
     if (s->info_callback != NULL)
         cb = s->info_callback;
     else if (s->ctx->info_callback != NULL)
         cb = s->ctx->info_callback;
 
 #ifdef GRANDSTREAM_NETWORKS
-    ssl_log(SSL_LOG_NOT, "%s enter ...\n", __FUNCTION__);
+    ssl_log(SSL_LOG_NOT, "%s enter, s->in_handshake: %d, state: %s\n", __FUNCTION__, s->in_handshake, SSL_state_string_long(s));
 #endif
 
     s->in_handshake++;
@@ -175,6 +179,11 @@ int ssl23_accept(SSL *s)
         SSL_clear(s);
 
     for (;;) {
+#ifdef GRANDSTREAM_NETWORKS
+        memset(state_buffer, 0, sizeof(state_buffer) - 1);
+        snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
         state = s->state;
 
         switch (s->state) {
@@ -211,6 +220,9 @@ int ssl23_accept(SSL *s)
             s->state = SSL23_ST_SR_CLNT_HELLO_A;
             s->ctx->stats.sess_accept++;
             s->init_num = 0;
+#ifdef GRANDSTREAM_NETWORKS
+            ssl_log(SSL_LOG_NOT, "OpenSSL state change from '%s' to '%s'\n", state_buffer, SSL_state_string_long(s));
+#endif
             break;
 
         case SSL23_ST_SR_CLNT_HELLO_A:
@@ -233,6 +245,10 @@ int ssl23_accept(SSL *s)
         if ((cb != NULL) && (s->state != state)) {
             new_state = s->state;
             s->state = state;
+#ifdef GRANDSTREAM_NETWORKS
+            ssl_log(SSL_LOG_NOT, "SSL_CB_ACCEPT_LOOP enter, state: '%s'\n", SSL_state_string_long(s));
+#endif
+
             cb(s, SSL_CB_ACCEPT_LOOP, 1);
             s->state = new_state;
         }
@@ -269,6 +285,10 @@ int ssl23_get_client_hello(SSL *s)
     int type = 0;
     int v[2];
 
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "%s start ...\n", __FUNCTION__);
+#endif
+
     if (s->state == SSL23_ST_SR_CLNT_HELLO_A) {
         /* read the initial header */
         v[0] = v[1] = 0;
@@ -297,6 +317,9 @@ int ssl23_get_client_hello(SSL *s)
             /*
              * SSLv2 header
              */
+#ifdef GRANDSTREAM_NETWORKS
+            ssl_log(SSL_LOG_NOT, "SSLv2 header ...\n");
+#endif
             if ((p[3] == 0x00) && (p[4] == 0x02)) {
                 v[0] = p[3];
                 v[1] = p[4];
@@ -353,6 +376,9 @@ int ssl23_get_client_hello(SSL *s)
             /*
              * SSLv3 or tls1 header
              */
+#ifdef GRANDSTREAM_NETWORKS
+            ssl_log(SSL_LOG_NOT, "SSLv3 or tls1 header ...\n");
+#endif
 
             v[0] = p[1];        /* major version (= SSL3_VERSION_MAJOR) */
             /*
@@ -459,6 +485,9 @@ int ssl23_get_client_hello(SSL *s)
          * we have SSLv3/TLSv1 in an SSLv2 header (other cases skip this
          * state)
          */
+#ifdef GRANDSTREAM_NETWORKS
+        ssl_log(SSL_LOG_ERR, "we have SSLv3/TLSv1 in an SSLv2 header (other cases skip this state!\n");
+#endif
 
         type = 2;
         p = s->packet;
@@ -651,6 +680,9 @@ int ssl23_get_client_hello(SSL *s)
         /*
          * we have SSLv3/TLSv1 (type 2: SSL2 style, type 3: SSL3/TLS style)
          */
+#ifdef GRANDSTREAM_NETWORKS
+        ssl_log(SSL_LOG_DEB, "We have SSLv3/TLSv1 (type 2: SSL2 style, type 3: SSL3/TLS style), type: %d\n", type);
+#endif
         const SSL_METHOD *new_method;
         new_method = ssl23_get_server_method(s->version);
         if (new_method == NULL) {
@@ -703,6 +735,10 @@ int ssl23_get_client_hello(SSL *s)
         goto err;
     }
     s->init_num = 0;
+
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "%s ended ...\n", __FUNCTION__);
+#endif
 
     if (buf != buf_space)
         OPENSSL_free(buf);

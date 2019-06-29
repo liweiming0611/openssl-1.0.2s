@@ -116,6 +116,10 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssl_log.h>
+#endif
+
 static const SSL_METHOD *ssl23_get_client_method(int ver);
 static int ssl23_client_hello(SSL *s);
 static int ssl23_get_server_hello(SSL *s);
@@ -382,6 +386,9 @@ static int ssl23_client_hello(SSL *s)
          * Since we're sending s23 client hello, we're not reusing a session, as
          * we'd be using the method from the saved session instead
          */
+#ifdef GRANDSTREAM_NETWORKS
+        ssl_log(SSL_LOG_DEB, "ssl_get_new_session enter ...\n");
+#endif
         if (!ssl_get_new_session(s, 0)) {
             return -1;
         }

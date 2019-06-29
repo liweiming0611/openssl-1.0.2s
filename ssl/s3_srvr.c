@@ -170,6 +170,10 @@
 #endif
 #include <openssl/md5.h>
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssl_log.h>
+#endif
+
 #ifndef OPENSSL_NO_SSL3_METHOD
 static const SSL_METHOD *ssl3_get_server_method(int ver);
 
@@ -1035,6 +1039,10 @@ int ssl3_get_client_hello(SSL *s)
      */
     if ((s->new_session
          && (s->options & SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION))) {
+#ifdef GRANDSTREAM_NETWORKS
+        ssl_log(SSL_LOG_DEB, "ssl_get_new_session enter ...\n");
+#endif
+
         if (!ssl_get_new_session(s, 1))
             goto err;
     } else {
@@ -1054,6 +1062,9 @@ int ssl3_get_client_hello(SSL *s)
         } else if (i == -1)
             goto err;
         else {                  /* i == 0 */
+#ifdef GRANDSTREAM_NETWORKS
+            ssl_log(SSL_LOG_DEB, "ssl_get_new_session enter ...\n");
+#endif
 
             if (!ssl_get_new_session(s, 1))
                 goto err;

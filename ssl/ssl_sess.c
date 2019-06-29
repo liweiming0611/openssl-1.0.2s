@@ -224,6 +224,11 @@ SSL_SESSION *SSL_SESSION_new(void)
 #ifndef OPENSSL_NO_SRP
     ss->srp_username = NULL;
 #endif
+
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "Create OpenSSl Session ...\n");
+#endif
+
     return (ss);
 }
 

@@ -55,22 +55,22 @@ void openssl_log_vsprintf(int level, const char *file, int line, const char *for
 
     switch (level) {
     case OPENSSL_LOG_ERR:
-        level_str = "\033[31;1mERROR\33[0m";
+        level_str = "\033[31;1m  ERROR\33[0m";
         break;
     case OPENSSL_LOG_WAR:
         level_str = "\033[32;31;1mWARRING\33[0m";
         break;
     case OPENSSL_LOG_NOT:
-        level_str = "\033[33;1mNOTICE\33[0m";
+        level_str = "\033[33;1m NOTICE\33[0m";
         break;
     case OPENSSL_LOG_DEB:
-        level_str = "\033[32;1mDEBUG\33[0m";
+        level_str = "\033[32;1m  DEBUG\33[0m";
         break;
     case OPENSSL_LOG_VEB:
         level_str = "\033[32mVERBOSE\33[0m";
         break;
     default:
-        level_str = "\033[32;1mDEB\33[0m";
+        level_str = "\033[32;1m  DEBUG\33[0m";
         break;
     }
 
@@ -97,8 +97,6 @@ static void openssl_msg_cb(int write_p, int version, int content_type, const voi
     int msg_len = 0;
 
     str_write_p = write_p ? ">>>" : "<<<";
-
-    openssl_log(OPENSSL_LOG_DEB, "write_p: %d\n", write_p);
 
     switch (version) {
     case SSL2_VERSION:
@@ -420,7 +418,38 @@ int openssl_load_cert_file(SSL_CTX *ctx)
     return 0;
 }
 
-SSL_CTX *openssl_ctx_new_session(const SSL_METHOD *method)
+static void openssl_info_callback(const SSL *s, int where, int ret)
+{
+    const char *str;
+    int w;
+
+    w = where & ~SSL_ST_MASK;
+
+    if (w & SSL_ST_CONNECT) {
+        str = "SSL_connect";
+    } else if (w & SSL_ST_ACCEPT) {
+        str = "SSL_accept";
+    } else {
+        str = "undefined";
+    }
+
+    if (where & SSL_CB_LOOP) {
+        openssl_log(SSL_LOG_DEB, "%s: %s\n", str, SSL_state_string_long(s));
+    } else if (where & SSL_CB_ALERT) {
+        str = (where & SSL_CB_READ) ? "read" : "write";
+        openssl_log(SSL_LOG_DEB, "SSL3 alert %s:%s:%s\n", str,
+                   SSL_alert_type_string_long(ret),
+                   SSL_alert_desc_string_long(ret));
+    } else if (where & SSL_CB_EXIT) {
+        if (ret == 0) {
+            openssl_log(SSL_LOG_ERR, "%s:failed in %s\n", str, SSL_state_string_long(s));
+        } else if (ret < 0) {
+            openssl_log(SSL_LOG_ERR, "%s:error in %s\n", str, SSL_state_string_long(s));
+        }
+    }
+}
+
+SSL_CTX *openssl_ctx_new(const SSL_METHOD *method)
 {
     SSL_CTX *ctx = NULL;
 
@@ -429,6 +458,8 @@ SSL_CTX *openssl_ctx_new_session(const SSL_METHOD *method)
         ERR_print_errors_fp(stdout);
         return NULL;
     }
+
+    SSL_CTX_set_info_callback(ctx, openssl_info_callback);
 
     return ctx;
 }

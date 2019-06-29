@@ -62,6 +62,10 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssl_log.h>
+#endif
+
 X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 {
     X509_LOOKUP *ret;
@@ -210,6 +214,12 @@ X509_STORE *X509_STORE_new(void)
        goto err3;
 
     ret->references = 1;
+
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "Create certificate store. It is used for all certificate validation.\n");
+    ssl_log(SSL_LOG_DEB, "Once we have a certificate chain, the 'verify' function is then called to actually check the cert chain.\n");
+#endif
+
     return ret;
 
  err3:

@@ -117,6 +117,10 @@
 # include <openssl/objects.h>
 # include <openssl/evp.h>
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssl_log.h>
+#endif
+
 static const SSL_METHOD *ssl2_get_client_method(int ver);
 static int get_server_finished(SSL *s);
 static int get_server_verify(SSL *s);
@@ -431,6 +435,10 @@ static int get_server_hello(SSL *s)
          * 'blank' session ID, the session-id length will still be 0
          */
         if (s->session->session_id_length > 0) {
+#ifdef GRANDSTREAM_NETWORKS
+            ssl_log(SSL_LOG_DEB, "ssl_get_new_session enter ...\n");
+#endif
+
             if (!ssl_get_new_session(s, 0)) {
                 ssl2_return_error(s, SSL2_PE_UNDEFINED_ERROR);
                 return (-1);
@@ -542,6 +550,10 @@ static int client_hello(SSL *s)
     buf = (unsigned char *)s->init_buf->data;
     if (s->state == SSL2_ST_SEND_CLIENT_HELLO_A) {
         if ((s->session == NULL) || (s->session->ssl_version != s->version)) {
+#ifdef GRANDSTREAM_NETWORKS
+            ssl_log(SSL_LOG_DEB, "ssl_get_new_session enter ...\n");
+#endif
+
             if (!ssl_get_new_session(s, 0)) {
                 ssl2_return_error(s, SSL2_PE_UNDEFINED_ERROR);
                 return (-1);

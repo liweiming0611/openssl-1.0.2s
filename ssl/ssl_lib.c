@@ -162,76 +162,6 @@
 
 #ifdef GRANDSTREAM_NETWORKS
 #include <openssl/ssl_log.h>
-static ssl_log_cb ssl_logcb = NULL;
-
-void ssl_set_logger_cb(ssl_log_cb cb)
-{
-    ssl_logcb = cb;
-}
-
-void ssl_log_vsprintf(int level, const char *file, int line, const char *format, ...)
-{
-    char *log_buffer = NULL;
-    char *file_name = NULL;
-    char *level_str = NULL;
-#if 0
-    struct timeval tv_now;
-    time_t tt;
-    struct tm *t = NULL;
-#endif
-
-    va_list ap;
-    va_start(ap, format);
-    vasprintf(&log_buffer, format, ap);
-    va_end(ap);
-
-    if (file) {
-        file_name = strrchr(file, '/');
-    }
-
-    if (ssl_logcb) {
-        ssl_logcb(level, file_name ? ++file_name : file, line, log_buffer);
-    }
-
-#if 0
-    if (NULL == ssl_log_cb){
-        switch (level) {
-        case SSL_LOG_ERR:
-            level_str = "\033[31;1mERR\33[0m";
-            break;
-        case SSL_LOG_WAR:
-            level_str = "\033[32;31;1mWAR\33[0m";
-            break;
-        case SSL_LOG_NOT:
-            level_str = "\033[33;1mNOT\33[0m";
-            break;
-        case SSL_LOG_DEB:
-            level_str = "\033[32;1mDEB\33[0m";
-            break;
-        case SSL_LOG_VEB:
-            level_str = "\033[32mVEB\33[0m";
-            break;
-        default:
-            level_str = "\033[32;1mDEB\33[0m";
-            break;
-        }
-
-        tt = time(NULL);
-        t = localtime(&tt);
-        gettimeofday(&tv_now, NULL);
-
-        fprintf(stderr, "[%4d-%02d-%02d %02d:%02d:%02d:%03ld] %s [%05ld]   -- %s:%d  %s",
-            t->tm_year+1900, t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, tv_now.tv_usec,
-            level_str, syscall(SYS_gettid), file_name ? ++file_name : file, line, log_buffer);
-    } else {
-        ssl_log_cb(level, file, line, log_buffer);
-    }
-#endif
-
-    if (log_buffer) {
-        free(log_buffer);
-    }
-}
 #endif
 
 const char *SSL_version_str = OPENSSL_VERSION_TEXT;
@@ -817,6 +747,10 @@ int SSL_set_fd(SSL *s, int fd)
     BIO_set_fd(bio, fd, BIO_NOCLOSE);
     SSL_set_bio(s, bio, bio);
     ret = 1;
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "New socket BIO ...\n");
+#endif
+
  err:
     return (ret);
 }
