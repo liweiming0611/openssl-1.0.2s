@@ -239,6 +239,13 @@ int ssl3_accept(SSL *s)
         SSLerr(SSL_F_SSL3_ACCEPT, SSL_R_NO_CERTIFICATE_SET);
         return (-1);
     }
+
+#ifdef GRANDSTREAM_NETWORKS
+    char state_buffer[128] = {0};
+    snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+    ssl_log(SSL_LOG_DEB, "%s enter, state: 0x%x, '%s'\n", __FUNCTION__, s->state, SSL_state_string_long(s));
+#endif
+
 #ifndef OPENSSL_NO_HEARTBEATS
     /*
      * If we're awaiting a HeartbeatResponse, pretend we already got and
@@ -252,6 +259,10 @@ int ssl3_accept(SSL *s)
 #endif
 
     for (;;) {
+#ifdef GRANDSTREAM_NETWORKS
+        ssl_log(SSL_LOG_NOT, "OpenSSL state change from '%s' to '%s'\n", state_buffer, SSL_state_string_long(s));
+        memset(state_buffer, 0, sizeof(state_buffer) - 1);
+#endif
         state = s->state;
 
         switch (s->state) {
@@ -270,6 +281,9 @@ int ssl3_accept(SSL *s)
 
             if ((s->version >> 8) != 3) {
                 SSLerr(SSL_F_SSL3_ACCEPT, ERR_R_INTERNAL_ERROR);
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
                 s->state = SSL_ST_ERR;
                 return -1;
             }
@@ -278,12 +292,19 @@ int ssl3_accept(SSL *s)
             if (s->init_buf == NULL) {
                 if ((buf = BUF_MEM_new()) == NULL) {
                     ret = -1;
+#ifdef GRANDSTREAM_NETWORKS
+                    snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
                     s->state = SSL_ST_ERR;
                     goto end;
                 }
                 if (!BUF_MEM_grow(buf, SSL3_RT_MAX_PLAIN_LENGTH)) {
                     BUF_MEM_free(buf);
                     ret = -1;
+#ifdef GRANDSTREAM_NETWORKS
+                    snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                     s->state = SSL_ST_ERR;
                     goto end;
                 }
@@ -292,6 +313,10 @@ int ssl3_accept(SSL *s)
 
             if (!ssl3_setup_buffers(s)) {
                 ret = -1;
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = SSL_ST_ERR;
                 goto end;
             }
@@ -311,15 +336,26 @@ int ssl3_accept(SSL *s)
                  */
                 if (!ssl_init_wbio_buffer(s, 1)) {
                     ret = -1;
+#ifdef GRANDSTREAM_NETWORKS
+                    snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                     s->state = SSL_ST_ERR;
                     goto end;
                 }
 
                 if (!ssl3_init_finished_mac(s)) {
                     ret = -1;
+#ifdef GRANDSTREAM_NETWORKS
+                    snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                     s->state = SSL_ST_ERR;
                     goto end;
                 }
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
 
                 s->state = SSL3_ST_SR_CLNT_HELLO_A;
                 s->ctx->stats.sess_accept++;
@@ -334,6 +370,10 @@ int ssl3_accept(SSL *s)
                        SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
                 ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
                 ret = -1;
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = SSL_ST_ERR;
                 goto end;
             } else {
@@ -342,6 +382,10 @@ int ssl3_accept(SSL *s)
                  * HelloRequest
                  */
                 s->ctx->stats.sess_accept_renegotiate++;
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = SSL3_ST_SW_HELLO_REQ_A;
             }
             break;
@@ -354,11 +398,19 @@ int ssl3_accept(SSL *s)
             if (ret <= 0)
                 goto end;
             s->s3->tmp.next_state = SSL3_ST_SW_HELLO_REQ_C;
+#ifdef GRANDSTREAM_NETWORKS
+            snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
             s->state = SSL3_ST_SW_FLUSH;
             s->init_num = 0;
 
             if (!ssl3_init_finished_mac(s)) {
                 ret = -1;
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = SSL_ST_ERR;
                 goto end;
             }
@@ -377,6 +429,10 @@ int ssl3_accept(SSL *s)
             if (ret <= 0)
                 goto end;
 #ifndef OPENSSL_NO_SRP
+#ifdef GRANDSTREAM_NETWORKS
+            snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
             s->state = SSL3_ST_SR_CLNT_HELLO_D;
         case SSL3_ST_SR_CLNT_HELLO_D:
             {
@@ -397,6 +453,10 @@ int ssl3_accept(SSL *s)
                     if (al != TLS1_AD_UNKNOWN_PSK_IDENTITY)
                         SSLerr(SSL_F_SSL3_ACCEPT, SSL_R_CLIENTHELLO_TLSEXT);
                     ret = -1;
+#ifdef GRANDSTREAM_NETWORKS
+                    snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                     s->state = SSL_ST_ERR;
                     goto end;
                 }
@@ -404,6 +464,10 @@ int ssl3_accept(SSL *s)
 #endif
 
             s->renegotiate = 2;
+#ifdef GRANDSTREAM_NETWORKS
+            snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
             s->state = SSL3_ST_SW_SRVR_HELLO_A;
             s->init_num = 0;
             break;
@@ -415,17 +479,36 @@ int ssl3_accept(SSL *s)
                 goto end;
 #ifndef OPENSSL_NO_TLSEXT
             if (s->hit) {
-                if (s->tlsext_ticket_expected)
+                if (s->tlsext_ticket_expected) {
+#ifdef GRANDSTREAM_NETWORKS
+                    snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                     s->state = SSL3_ST_SW_SESSION_TICKET_A;
-                else
+                } else {
+#ifdef GRANDSTREAM_NETWORKS
+                    snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                     s->state = SSL3_ST_SW_CHANGE_A;
+                }
             }
 #else
-            if (s->hit)
-                s->state = SSL3_ST_SW_CHANGE_A;
+            if (s->hit) {
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
 #endif
-            else
+
+                s->state = SSL3_ST_SW_CHANGE_A;
+            }
+#endif
+            else {
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = SSL3_ST_SW_CERT_A;
+            }
             s->init_num = 0;
             break;
 
@@ -442,17 +525,33 @@ int ssl3_accept(SSL *s)
                 if (ret <= 0)
                     goto end;
 #ifndef OPENSSL_NO_TLSEXT
-                if (s->tlsext_status_expected)
+                if (s->tlsext_status_expected) {
+#ifdef GRANDSTREAM_NETWORKS
+                    snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                     s->state = SSL3_ST_SW_CERT_STATUS_A;
-                else
+                } else {
+#ifdef GRANDSTREAM_NETWORKS
+                    snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                     s->state = SSL3_ST_SW_KEY_EXCH_A;
+                }
             } else {
                 skip = 1;
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = SSL3_ST_SW_KEY_EXCH_A;
             }
 #else
             } else
                 skip = 1;
+#ifdef GRANDSTREAM_NETWORKS
+            snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
 
             s->state = SSL3_ST_SW_KEY_EXCH_A;
 #endif
@@ -506,6 +605,9 @@ int ssl3_accept(SSL *s)
                     goto end;
             } else
                 skip = 1;
+#ifdef GRANDSTREAM_NETWORKS
+            snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
 
             s->state = SSL3_ST_SW_CERT_REQ_A;
             s->init_num = 0;
@@ -547,9 +649,17 @@ int ssl3_accept(SSL *s)
                 /* no cert request */
                 skip = 1;
                 s->s3->tmp.cert_request = 0;
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = SSL3_ST_SW_SRVR_DONE_A;
                 if (s->s3->handshake_buffer) {
                     if (!ssl3_digest_cached_records(s)) {
+#ifdef GRANDSTREAM_NETWORKS
+                        snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                         s->state = SSL_ST_ERR;
                         return -1;
                     }
@@ -560,8 +670,16 @@ int ssl3_accept(SSL *s)
                 if (ret <= 0)
                     goto end;
 #ifndef NETSCAPE_HANG_BUG
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = SSL3_ST_SW_SRVR_DONE_A;
 #else
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = SSL3_ST_SW_FLUSH;
                 s->s3->tmp.next_state = SSL3_ST_SR_CERT_A;
 #endif
@@ -575,6 +693,10 @@ int ssl3_accept(SSL *s)
             if (ret <= 0)
                 goto end;
             s->s3->tmp.next_state = SSL3_ST_SR_CERT_A;
+#ifdef GRANDSTREAM_NETWORKS
+            snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
             s->state = SSL3_ST_SW_FLUSH;
             s->init_num = 0;
             break;
@@ -596,6 +718,9 @@ int ssl3_accept(SSL *s)
                 goto end;
             }
             s->rwstate = SSL_NOTHING;
+#ifdef GRANDSTREAM_NETWORKS
+            snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
 
             s->state = s->s3->tmp.next_state;
             break;
@@ -608,6 +733,10 @@ int ssl3_accept(SSL *s)
                     goto end;
             }
             s->init_num = 0;
+#ifdef GRANDSTREAM_NETWORKS
+            snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
             s->state = SSL3_ST_SR_KEY_EXCH_A;
             break;
 
@@ -624,15 +753,32 @@ int ssl3_accept(SSL *s)
                  * its key from the certificate for key exchange.
                  */
 #if defined(OPENSSL_NO_TLSEXT) || defined(OPENSSL_NO_NEXTPROTONEG)
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = SSL3_ST_SR_FINISHED_A;
 #else
-                if (s->s3->next_proto_neg_seen)
+                if (s->s3->next_proto_neg_seen) {
+#ifdef GRANDSTREAM_NETWORKS
+                    snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                     s->state = SSL3_ST_SR_NEXT_PROTO_A;
-                else
+                } else {
+#ifdef GRANDSTREAM_NETWORKS
+                    snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                     s->state = SSL3_ST_SR_FINISHED_A;
+                }
 #endif
                 s->init_num = 0;
             } else if (SSL_USE_SIGALGS(s)) {
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = SSL3_ST_SR_CERT_VRFY_A;
                 s->init_num = 0;
                 if (!s->session->peer)
@@ -643,17 +789,28 @@ int ssl3_accept(SSL *s)
                  */
                 if (!s->s3->handshake_buffer) {
                     SSLerr(SSL_F_SSL3_ACCEPT, ERR_R_INTERNAL_ERROR);
+#ifdef GRANDSTREAM_NETWORKS
+                    snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                     s->state = SSL_ST_ERR;
                     return -1;
                 }
                 s->s3->flags |= TLS1_FLAGS_KEEP_HANDSHAKE;
                 if (!ssl3_digest_cached_records(s)) {
+#ifdef GRANDSTREAM_NETWORKS
+                    snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                     s->state = SSL_ST_ERR;
                     return -1;
                 }
             } else {
                 int offset = 0;
                 int dgst_num;
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
 
                 s->state = SSL3_ST_SR_CERT_VRFY_A;
                 s->init_num = 0;
@@ -666,6 +823,10 @@ int ssl3_accept(SSL *s)
                  */
                 if (s->s3->handshake_buffer) {
                     if (!ssl3_digest_cached_records(s)) {
+#ifdef GRANDSTREAM_NETWORKS
+                        snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                         s->state = SSL_ST_ERR;
                         return -1;
                     }
@@ -685,6 +846,10 @@ int ssl3_accept(SSL *s)
                         dgst_size =
                             EVP_MD_CTX_size(s->s3->handshake_dgst[dgst_num]);
                         if (dgst_size < 0) {
+#ifdef GRANDSTREAM_NETWORKS
+                            snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                             s->state = SSL_ST_ERR;
                             ret = -1;
                             goto end;
@@ -701,12 +866,25 @@ int ssl3_accept(SSL *s)
                 goto end;
 
 #if defined(OPENSSL_NO_TLSEXT) || defined(OPENSSL_NO_NEXTPROTONEG)
+#ifdef GRANDSTREAM_NETWORKS
+            snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
             s->state = SSL3_ST_SR_FINISHED_A;
 #else
-            if (s->s3->next_proto_neg_seen)
+            if (s->s3->next_proto_neg_seen) {
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = SSL3_ST_SR_NEXT_PROTO_A;
-            else
+            } else {
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = SSL3_ST_SR_FINISHED_A;
+            }
 #endif
             s->init_num = 0;
             break;
@@ -730,6 +908,10 @@ int ssl3_accept(SSL *s)
             if (ret <= 0)
                 goto end;
             s->init_num = 0;
+#ifdef GRANDSTREAM_NETWORKS
+            snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
             s->state = SSL3_ST_SR_FINISHED_A;
             break;
 #endif
@@ -750,14 +932,28 @@ int ssl3_accept(SSL *s)
                                     SSL3_ST_SR_FINISHED_B);
             if (ret <= 0)
                 goto end;
-            if (s->hit)
+            if (s->hit) {
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = SSL_ST_OK;
+            }
 #ifndef OPENSSL_NO_TLSEXT
-            else if (s->tlsext_ticket_expected)
+            else if (s->tlsext_ticket_expected) {
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = SSL3_ST_SW_SESSION_TICKET_A;
 #endif
-            else
+            } else {
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = SSL3_ST_SW_CHANGE_A;
+            }
             s->init_num = 0;
             break;
 
@@ -767,6 +963,10 @@ int ssl3_accept(SSL *s)
             ret = ssl3_send_newsession_ticket(s);
             if (ret <= 0)
                 goto end;
+#ifdef GRANDSTREAM_NETWORKS
+            snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
             s->state = SSL3_ST_SW_CHANGE_A;
             s->init_num = 0;
             break;
@@ -776,6 +976,10 @@ int ssl3_accept(SSL *s)
             ret = ssl3_send_cert_status(s);
             if (ret <= 0)
                 goto end;
+#ifdef GRANDSTREAM_NETWORKS
+            snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
             s->state = SSL3_ST_SW_KEY_EXCH_A;
             s->init_num = 0;
             break;
@@ -788,6 +992,10 @@ int ssl3_accept(SSL *s)
             s->session->cipher = s->s3->tmp.new_cipher;
             if (!s->method->ssl3_enc->setup_key_block(s)) {
                 ret = -1;
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = SSL_ST_ERR;
                 goto end;
             }
@@ -798,6 +1006,10 @@ int ssl3_accept(SSL *s)
 
             if (ret <= 0)
                 goto end;
+#ifdef GRANDSTREAM_NETWORKS
+            snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
             s->state = SSL3_ST_SW_FINISHED_A;
             s->init_num = 0;
 
@@ -805,6 +1017,10 @@ int ssl3_accept(SSL *s)
                                                           SSL3_CHANGE_CIPHER_SERVER_WRITE))
             {
                 ret = -1;
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = SSL_ST_ERR;
                 goto end;
             }
@@ -822,6 +1038,10 @@ int ssl3_accept(SSL *s)
                                      ssl3_enc->server_finished_label_len);
             if (ret <= 0)
                 goto end;
+#ifdef GRANDSTREAM_NETWORKS
+            snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
             s->state = SSL3_ST_SW_FLUSH;
             if (s->hit) {
 #if defined(OPENSSL_NO_TLSEXT) || defined(OPENSSL_NO_NEXTPROTONEG)
@@ -884,8 +1104,16 @@ int ssl3_accept(SSL *s)
 
             if ((cb != NULL) && (s->state != state)) {
                 new_state = s->state;
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = state;
                 cb(s, SSL_CB_ACCEPT_LOOP, 1);
+#ifdef GRANDSTREAM_NETWORKS
+                snprintf(state_buffer, sizeof(state_buffer) - 1, "%s", SSL_state_string_long(s));
+#endif
+
                 s->state = new_state;
             }
         }
@@ -938,6 +1166,9 @@ int ssl3_get_client_hello(SSL *s)
     if (s->state == SSL3_ST_SR_CLNT_HELLO_A) {
         s->state = SSL3_ST_SR_CLNT_HELLO_B;
     }
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "%s enter ...\n", __FUNCTION__);
+#endif
     s->first_packet = 1;
     n = s->method->ssl_get_message(s,
                                    SSL3_ST_SR_CLNT_HELLO_B,

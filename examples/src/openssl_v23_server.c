@@ -7,6 +7,8 @@ int main(int argc, char **argv)
     socklen_t socklen = 0;
     struct sockaddr_in my_addr, their_addr;
     SSL_CTX *ctx = NULL;
+    char readbuf[65535] = {0};
+    int retval = -1;
 
     openssl_log_init();
     openssl_init();
@@ -49,6 +51,17 @@ int main(int argc, char **argv)
             SSL_free(ssl);
             close(new_fd);
             continue;
+        }
+
+        retval = SSL_read(ssl, readbuf, sizeof(readbuf) - 1);
+        if (retval > 0) {
+            openssl_log(OPENSSL_LOG_NOT, "Read: \n%s\n", readbuf);
+
+            char response[256] = {
+                "HTTP/1.1 404 Not Found\r\n"
+                "\r\n\r\n"
+            };
+            SSL_write(ssl, response, strlen(response));
         }
     }
 

@@ -16,6 +16,7 @@ int init_sock(inet_sock_t sock, int type)
 int init_sockaddr(struct sockaddr *sockaddr, inet_sock_t sock, int sockfd)
 {
     struct sockaddr_in addr;
+    int on = 1;
 
     memset(&addr, 0, sizeof(addr));
 
@@ -25,6 +26,11 @@ int init_sockaddr(struct sockaddr *sockaddr, inet_sock_t sock, int sockfd)
 
     if (sockaddr) {
         memcpy(sockaddr, &addr, sizeof(addr));
+    }
+
+    if((setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on))) < 0) {
+        openssl_log(OPENSSL_LOG_ERR, "%s\n", strerror(errno));
+        return -1;
     }
 
     if (bind(sockfd, (struct sockaddr *)&addr, sizeof(struct sockaddr))) {
