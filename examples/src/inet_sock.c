@@ -13,7 +13,7 @@ int init_sock(inet_sock_t sock, int type)
     return socket(sock, type, 0);
 }
 
-int init_sockaddr(struct sockaddr *sockaddr, inet_sock_t sock, int sockfd)
+int init_sockaddr(struct sockaddr *sockaddr, inet_sock_t sock, int sockfd, int opt)
 {
     struct sockaddr_in addr;
     int on = 1;
@@ -33,14 +33,16 @@ int init_sockaddr(struct sockaddr *sockaddr, inet_sock_t sock, int sockfd)
         return -1;
     }
 
-    if (bind(sockfd, (struct sockaddr *)&addr, sizeof(struct sockaddr))) {
-        openssl_log(OPENSSL_LOG_ERR, "%s\n", strerror(errno));
-        return -1;
-    }
+    if (opt) {
+        if (bind(sockfd, (struct sockaddr *)&addr, sizeof(struct sockaddr))) {
+            openssl_log(OPENSSL_LOG_ERR, "%s\n", strerror(errno));
+            return -1;
+        }
 
-    if (listen(sockfd, 100)) {
-        openssl_log(OPENSSL_LOG_ERR, "%s\n", strerror(errno));
-        return -1;
+        if (opt && listen(sockfd, 100)) {
+            openssl_log(OPENSSL_LOG_ERR, "%s\n", strerror(errno));
+            return -1;
+        }
     }
 
     return 0;

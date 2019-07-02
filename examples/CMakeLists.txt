@@ -96,3 +96,23 @@ TARGET_LINK_LIBRARIES(openssl_v23_server
     ${SSL_LIBRARY}
     ${CRYPTO_LIBRARY}
 )
+
+ADD_EXECUTABLE(openssl_dtls_server
+    ${SOURCE_PATH}/openssl.c
+    ${SOURCE_PATH}/inet_sock.c
+    ${SOURCE_PATH}/openssl_dtls_server.c)
+
+TARGET_LINK_LIBRARIES(openssl_dtls_server
+    ${SSL_LIBRARY}
+    ${CRYPTO_LIBRARY}
+)
+
+ADD_EXECUTABLE(openssl_dtls_client
+    ${SOURCE_PATH}/openssl.c
+    ${SOURCE_PATH}/inet_sock.c
+    ${SOURCE_PATH}/openssl_dtls_client.c)
+
+TARGET_LINK_LIBRARIES(openssl_dtls_client
+    ${SSL_LIBRARY}
+    ${CRYPTO_LIBRARY}
+)
