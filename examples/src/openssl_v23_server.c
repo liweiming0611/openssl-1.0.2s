@@ -27,7 +27,7 @@ int main(int argc, char **argv)
         goto error;
     }
 
-    if (init_sockaddr((struct sockaddr *)&their_addr, SOCK_AF_INET, sockfd, 1)) {
+    if (init_sockaddr((struct sockaddr *)&their_addr, SOCK_AF_INET, sockfd, 1, 1)) {
         goto error;
     }
 

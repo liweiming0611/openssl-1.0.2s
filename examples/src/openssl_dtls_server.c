@@ -10,6 +10,8 @@ int main(int argc, char **argv)
     SSL *ssl = NULL;
     int retval = -1;
     char readbuf[65535] = {0};
+    BIO * sbio = NULL;
+    int read_from_sslcon = -1;
 
     openssl_log_init();
     openssl_init();
@@ -28,23 +30,35 @@ int main(int argc, char **argv)
         goto error;
     }
 
-    if (init_sockaddr((struct sockaddr *)&their_addr, SOCK_AF_INET, sockfd, 0)) {
+    if (init_sockaddr((struct sockaddr *)&their_addr, SOCK_AF_INET, sockfd, 0, 1)) {
         goto error;
     }
 
     ssl = openssl_ssl_new(ctx);
-    openssl_set_fd(ssl, sockfd);
+    if (NULL == ssl) {
+        goto error;
+    }
 
-    //SSL_set_connect_state(ssl);
+    sbio = BIO_new_dgram(sockfd, BIO_NOCLOSE);
+    if (NULL == sbio) {
+        goto error;
+    }
+
+    SSL_set_bio(ssl, sbio, sbio);
+    SSL_set_accept_state(ssl);
 
     while (1) {
-        retval = SSL_accept(ssl);
-        if (0 == retval) {
-            openssl_log(OPENSSL_LOG_WAR, "Handshake failure, reason: %s\n", SSL_get_error(ssl, retval));
-            continue;
+        read_from_sslcon = SSL_read(ssl, readbuf, sizeof(readbuf) - 1);
+        if (read_from_sslcon) {
+            if (!SSL_is_init_finished(ssl)) {
+                openssl_log(OPENSSL_LOG_WAR, "======================\n");
+                continue;
+            }
+
+            openssl_log(OPENSSL_LOG_DEB, "Read %d bytes from '%s:%d', %s\n", read_from_sslcon,
+                inet_ntoa(their_addr.sin_addr), ntohs(their_addr.sin_port), readbuf);
         } else {
-            retval = SSL_read(ssl, readbuf, sizeof(readbuf) - 1);
-            openssl_log(OPENSSL_LOG_DEB, "Read %d bytes, %s\n", retval, readbuf);
+            openssl_log(OPENSSL_LOG_NOT, "read_from_sslcon: %d\n", read_from_sslcon);
             sleep(1);
         }
     }
