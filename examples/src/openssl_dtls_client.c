@@ -16,12 +16,12 @@ int main(int argc, char **argv)
     openssl_log_init();
     openssl_init();
 
-    ctx = openssl_ctx_new(DTLSv1_client_method());
+    ctx = openssl_ctx_new(DTLS_method());
     if (NULL == ctx) {
         goto error;
     }
 
-    if (openssl_load_cert_file(ctx)) {
+    if (openssl_load_cert_file(ctx, 0)) {
         goto error;
     }
 

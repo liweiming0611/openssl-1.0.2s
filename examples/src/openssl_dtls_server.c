@@ -16,12 +16,12 @@ int main(int argc, char **argv)
     openssl_log_init();
     openssl_init();
 
-    ctx = openssl_ctx_new(DTLS_method());
+    ctx = openssl_ctx_new(DTLS_server_method());
     if (NULL == ctx) {
         goto error;
     }
 
-    if (openssl_load_cert_file(ctx)) {
+    if (openssl_load_cert_file(ctx, 1)) {
         goto error;
     }
 
@@ -51,7 +51,8 @@ int main(int argc, char **argv)
         read_from_sslcon = SSL_read(ssl, readbuf, sizeof(readbuf) - 1);
         if (read_from_sslcon) {
             if (!SSL_is_init_finished(ssl)) {
-                openssl_log(OPENSSL_LOG_WAR, "======================\n");
+                openssl_log(OPENSSL_LOG_WAR, "SSL init failure ...\n");
+                sleep(1);
                 continue;
             }
 

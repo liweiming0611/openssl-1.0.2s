@@ -27,7 +27,7 @@ int init_sockaddr(struct sockaddr *sockaddr, inet_sock_t sock, int sockfd, int u
         addr.sin_addr.s_addr = INADDR_ANY;
     } else {
         addr.sin_port = htons(7838);
-        if (!inet_aton("192.168.129.8", (struct in_addr *)&addr.sin_addr.s_addr)) {
+        if (!inet_aton("127.0.0.1", (struct in_addr *)&addr.sin_addr.s_addr)) {
             openssl_log(OPENSSL_LOG_ERR, "%s\n", strerror(errno));
             return -1;
         }

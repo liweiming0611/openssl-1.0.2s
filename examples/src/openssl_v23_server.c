@@ -18,7 +18,7 @@ int main(int argc, char **argv)
         goto error;
     }
 
-    if (openssl_load_cert_file(ctx)) {
+    if (openssl_load_cert_file(ctx, 1)) {
         goto error;
     }
 
