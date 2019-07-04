@@ -182,7 +182,6 @@ static void openssl_msg_cb(int write_p, int version, int content_type, const voi
         }
     }
 
-    openssl_log(OPENSSL_LOG_NOT, "version: 0x%x, content_type: %d\n", version, content_type);
     if (version == SSL3_VERSION ||
         version == TLS1_VERSION ||
         version == TLS1_1_VERSION ||
@@ -349,8 +348,7 @@ static void openssl_msg_cb(int write_p, int version, int content_type, const voi
                 }
             }
         }
-        openssl_log(OPENSSL_LOG_NOT, "str_details1: %s, len: %d, ((const unsigned char *)buf)[0]: %d\n",
-            str_details1, len, ((const unsigned char *)buf)[0]);
+
 #ifndef OPENSSL_NO_HEARTBEATS
         if (content_type == 24) { /* Heartbeat */
             str_details1 = ", Heartbeat";
@@ -403,25 +401,31 @@ int openssl_init(void)
     SSL_load_error_strings();
 }
 
+#define SERVER_CA   "ServerCAcert.pem"
+#define SERVER_KEY  "ServerPrivkey.pem"
+
+#define CLIENT_CA   "ClientCAcert.pem"
+#define CLIENT_KEY  "ClientPrivkey.pem"
+
 int openssl_load_cert_file(SSL_CTX *ctx, int csopt)
 {
     if (csopt) {
-        if (SSL_CTX_use_certificate_file(ctx, "./keys/server/ServerCAcert.pem", SSL_FILETYPE_PEM) <= 0) {
+        if (SSL_CTX_use_certificate_file(ctx, OPENSSL_SERVER_CA_PATH "/" SERVER_CA, SSL_FILETYPE_PEM) <= 0) {
             ERR_print_errors_fp(stdout);
             return -1;
         }
 
-        if (SSL_CTX_use_PrivateKey_file(ctx, "./keys/server/ServerPrivkey.pem", SSL_FILETYPE_PEM) <= 0) {
+        if (SSL_CTX_use_PrivateKey_file(ctx, OPENSSL_SERVER_CA_PATH "/" SERVER_KEY, SSL_FILETYPE_PEM) <= 0) {
             ERR_print_errors_fp(stdout);
             return -1;
         }
     } else {
-        if (SSL_CTX_use_certificate_file(ctx, "./keys/client/ClientCAcert.pem", SSL_FILETYPE_PEM) <= 0) {
+        if (SSL_CTX_use_certificate_file(ctx, OPENSSL_CLIENT_CA_PATH "/" CLIENT_CA, SSL_FILETYPE_PEM) <= 0) {
             ERR_print_errors_fp(stdout);
             return -1;
         }
 
-        if (SSL_CTX_use_PrivateKey_file(ctx, "./keys/client/ClientPrivkey.pem", SSL_FILETYPE_PEM) <= 0) {
+        if (SSL_CTX_use_PrivateKey_file(ctx, OPENSSL_CLIENT_CA_PATH "/" CLIENT_KEY, SSL_FILETYPE_PEM) <= 0) {
             ERR_print_errors_fp(stdout);
             return -1;
         }

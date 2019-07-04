@@ -30,7 +30,7 @@ int main(int argc, char **argv)
         goto error;
     }
 
-    if (init_sockaddr((struct sockaddr *)&their_addr, SOCK_AF_INET, sockfd, 0, 1)) {
+    if (init_sockaddr((struct sockaddr *)&my_addr, SOCK_AF_INET, sockfd, 0, 1)) {
         goto error;
     }
 
@@ -56,8 +56,10 @@ int main(int argc, char **argv)
                 continue;
             }
 
+            BIO_dgram_get_peer(sbio, &my_addr);
+
             openssl_log(OPENSSL_LOG_DEB, "Read %d bytes from '%s:%d', %s\n", read_from_sslcon,
-                inet_ntoa(their_addr.sin_addr), ntohs(their_addr.sin_port), readbuf);
+                inet_ntoa(my_addr.sin_addr), ntohs(my_addr.sin_port), readbuf);
         } else {
             openssl_log(OPENSSL_LOG_NOT, "read_from_sslcon: %d\n", read_from_sslcon);
             sleep(1);

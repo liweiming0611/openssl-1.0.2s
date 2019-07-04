@@ -31,6 +31,14 @@ INCLUDE_DIRECTORIES(${INCLUDE_PATH})
 
 SET(SOURCE_PATH ${PROJECT_SOURCE_DIR}/src)
 
+SET(OPENSSL_CLIENT_CA_PATH ${CMAKE_INSTALL_PREFIX}/keys/client)
+SET(OPENSSL_SERVER_CA_PATH ${CMAKE_INSTALL_PREFIX}/keys/server)
+
+configure_file (
+  "${PROJECT_SOURCE_DIR}/config.h.in"
+  "${PROJECT_SOURCE_DIR}/include/config.h"
+  )
+
 IF(SSL_PATH)
     SET(SSL_INCLUDES "${SSL_PATH}/include")
     SET(SSL_LIB_DIR "${SSL_PATH}/lib")
@@ -116,3 +124,22 @@ TARGET_LINK_LIBRARIES(openssl_dtls_client
     ${SSL_LIBRARY}
     ${CRYPTO_LIBRARY}
 )
+
+INSTALL(PROGRAMS
+    ${CMAKE_BINARY_DIR}/openssl_v23_server
+    ${CMAKE_BINARY_DIR}/openssl_dtls_server
+    ${CMAKE_BINARY_DIR}/openssl_dtls_client
+    DESTINATION
+    ${CMAKE_INSTALL_PREFIX}/sbin)
+
+INSTALL(FILES
+    ${CMAKE_BINARY_DIR}/../keys/client/ClientCAcert.pem
+    ${CMAKE_BINARY_DIR}/../keys/client/ClientPrivkey.pem
+    DESTINATION
+    ${CMAKE_INSTALL_PREFIX}/keys/client)
+
+INSTALL(FILES
+    ${CMAKE_BINARY_DIR}/../keys/server/ServerCAcert.pem
+    ${CMAKE_BINARY_DIR}/../keys/server/ServerPrivkey.pem
+    DESTINATION
+    ${CMAKE_INSTALL_PREFIX}/keys/server)

@@ -21,6 +21,8 @@
 #include <openssl/err.h>
 #include <openssl/ssl_log.h>
 
+#include <config.h>
+
 enum {
     OPENSSL_LOG_ERR = 1,
     OPENSSL_LOG_WAR = 2,
