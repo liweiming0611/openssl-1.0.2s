@@ -16,6 +16,7 @@ int init_sock(inet_sock_t sock, int type)
 
     sockfd = socket(sock, type, 0);
 
+#if 0
     if(flags = fcntl(sockfd, F_GETFL, 0) < 0) {
         openssl_log(OPENSSL_LOG_ERR, "%s\n", strerror(errno));
         goto end;
@@ -28,6 +29,7 @@ int init_sock(inet_sock_t sock, int type)
     }
 
 end:
+#endif
     return sockfd;
 }
 

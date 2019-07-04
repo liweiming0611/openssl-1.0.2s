@@ -17,6 +17,7 @@ int main(int argc, char **argv)
     BIO * sbio = NULL;
     int read_from_sslcon = -1;
     struct pollfd fds = {0};
+    struct timeval timeout;
 
     openssl_log_init();
     openssl_init();
@@ -49,6 +50,14 @@ int main(int argc, char **argv)
         goto error;
     }
 
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 250000;
+    BIO_ctrl(sbio, BIO_CTRL_DGRAM_SET_RECV_TIMEOUT, 0, &timeout);
+
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 250000;
+    BIO_ctrl(sbio, BIO_CTRL_DGRAM_SET_SEND_TIMEOUT, 0, &timeout);
+
     SSL_set_bio(ssl, sbio, sbio);
     SSL_set_accept_state(ssl);
 
@@ -57,7 +66,7 @@ int main(int argc, char **argv)
         fds.fd = sockfd;
         fds.events = POLLIN;
 
-        retval = poll(&fds, 1, 60000);
+        retval = poll(&fds, 1, 10000);
 
         if (retval && (fds.revents & POLLIN)) {
             read_from_sslcon = SSL_read(ssl, readbuf, sizeof(readbuf) - 1);
