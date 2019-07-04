@@ -1,3 +1,7 @@
+#include <poll.h>
+#include <errno.h>
+#include <string.h>
+
 #include <openssl.h>
 #include <inet_sock.h>
 
@@ -12,6 +16,7 @@ int main(int argc, char **argv)
     char readbuf[65535] = {0};
     BIO * sbio = NULL;
     int read_from_sslcon = -1;
+    struct pollfd fds = {0};
 
     openssl_log_init();
     openssl_init();
@@ -48,21 +53,25 @@ int main(int argc, char **argv)
     SSL_set_accept_state(ssl);
 
     while (1) {
-        read_from_sslcon = SSL_read(ssl, readbuf, sizeof(readbuf) - 1);
-        if (read_from_sslcon) {
-            if (!SSL_is_init_finished(ssl)) {
-                openssl_log(OPENSSL_LOG_WAR, "SSL init failure ...\n");
-                sleep(1);
-                continue;
+        memset(&fds, 0, sizeof(fds));
+        fds.fd = sockfd;
+        fds.events = POLLIN;
+
+        retval = poll(&fds, 1, 60000);
+
+        if (retval && (fds.revents & POLLIN)) {
+            read_from_sslcon = SSL_read(ssl, readbuf, sizeof(readbuf) - 1);
+            if (read_from_sslcon > 0) {
+                if (!SSL_is_init_finished(ssl)) {
+                    openssl_log(OPENSSL_LOG_WAR, "SSL init failure ...\n");
+                    continue;
+                }
+
+                BIO_dgram_get_peer(sbio, &my_addr);
+
+                openssl_log(OPENSSL_LOG_DEB, "Read %d bytes from '%s:%d', %s\n", read_from_sslcon,
+                    inet_ntoa(my_addr.sin_addr), ntohs(my_addr.sin_port), readbuf);
             }
-
-            BIO_dgram_get_peer(sbio, &my_addr);
-
-            openssl_log(OPENSSL_LOG_DEB, "Read %d bytes from '%s:%d', %s\n", read_from_sslcon,
-                inet_ntoa(my_addr.sin_addr), ntohs(my_addr.sin_port), readbuf);
-        } else {
-            openssl_log(OPENSSL_LOG_NOT, "read_from_sslcon: %d\n", read_from_sslcon);
-            sleep(1);
         }
     }
 

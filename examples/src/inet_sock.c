@@ -4,13 +4,31 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
 
 #include <inet_sock.h>
 #include <openssl.h>
 
 int init_sock(inet_sock_t sock, int type)
 {
-    return socket(sock, type, 0);
+    int sockfd = -1;
+    int flags = -1;
+
+    sockfd = socket(sock, type, 0);
+
+    if(flags = fcntl(sockfd, F_GETFL, 0) < 0) {
+        openssl_log(OPENSSL_LOG_ERR, "%s\n", strerror(errno));
+        goto end;
+    }
+
+    flags |= O_NONBLOCK;
+    if(fcntl(sockfd, F_SETFL, flags) < 0) {
+        openssl_log(OPENSSL_LOG_ERR, "%s\n", strerror(errno));
+        goto end;
+    }
+
+end:
+    return sockfd;
 }
 
 int init_sockaddr(struct sockaddr *sockaddr, inet_sock_t sock, int sockfd, int utopt, int csopt)

@@ -12,6 +12,7 @@ int main(int argc, char **argv)
     int retval = -1;
     char readbuf[65535] = {0};
     BIO *sbio = NULL;
+    int try = 0;
 
     openssl_log_init();
     openssl_init();
@@ -48,7 +49,7 @@ int main(int argc, char **argv)
     SSL_set_bio(ssl, sbio, sbio);
     SSL_set_connect_state(ssl);
 
-    while (1) {
+    while (try++ < 10) {
         snprintf(readbuf, sizeof(readbuf) - 1, "%s", "This is a DTLS client!\n");
         retval = SSL_write(ssl, readbuf, strlen(readbuf));
         if (retval > 0) {
