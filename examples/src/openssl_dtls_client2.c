@@ -11,20 +11,21 @@ int main(int argc, char **argv)
     SSL_CTX *ctx = NULL;
     SSL *ssl = NULL;
     int retval = -1;
-    char readbuf[65535] = {0};
+    char readbuf[65535] = {"This is a DTLS client!"};
     struct pollfd fds = {0};
     struct timeval timeout;
     BIO *read_bio = NULL, *write_bio = NULL;
+    int readbytes = -1;
 
     openssl_log_init();
     openssl_init();
 
-    ctx = openssl_ctx_new(DTLS_server_method());
+    ctx = openssl_ctx_new(DTLS_client_method());
     if (NULL == ctx) {
         goto error;
     }
 
-    if (openssl_load_cert_file(ctx, 1)) {
+    if (openssl_load_cert_file(ctx, 0)) {
         goto error;
     }
 
@@ -34,7 +35,7 @@ int main(int argc, char **argv)
     }
     init_nonblock(sockfd);
 
-    if (init_udp_sockaddr((struct sockaddr *)&my_addr, SOCK_AF_INET, sockfd, 1)) {
+    if (init_udp_sockaddr((struct sockaddr *)&my_addr, SOCK_AF_INET, sockfd, 0)) {
         goto error;
     }
 
@@ -57,7 +58,8 @@ int main(int argc, char **argv)
     BIO_set_mem_eof_return(write_bio, -1);
 
     SSL_set_bio(ssl, read_bio, write_bio);
-    SSL_set_accept_state(ssl);
+    SSL_set_connect_state(ssl);
+    SSL_write(ssl, readbuf, strlen(readbuf));
 
     while (1) {
         memset(&fds, 0, sizeof(fds));
@@ -72,24 +74,34 @@ int main(int argc, char **argv)
                 if ((readbuf[0] >= 20) && (readbuf[0] <= 63)) {
                     BIO_write(read_bio, readbuf, retval);
 
-                    memset(readbuf, 0, sizeof(readbuf));
                     len = SSL_read(ssl, readbuf, sizeof(readbuf));
                     if ((len < 0) && (SSL_ERROR_SSL == SSL_get_error(ssl, len))) {
                         unsigned long errorstr = ERR_get_error();
                         openssl_log(OPENSSL_LOG_ERR, "DTLS failure occurred due to reason '%s', terminating\n", ERR_reason_error_string(errorstr));
                         break;
                     } else {
-                        openssl_log(OPENSSL_LOG_DEB, "Read '%d' bytes from '%s:%d', first byte value: %s\n",
-                            len, inet_ntoa(their_addr.sin_addr), ntohs(their_addr.sin_port), readbuf);
+                        openssl_log(OPENSSL_LOG_DEB, "Read '%d' bytes from '%s:%d', first byte value: 0x%x(%d)\n",
+                            retval, inet_ntoa(their_addr.sin_addr), ntohs(their_addr.sin_port), readbuf[0], readbuf[0]);
                     }
                 }
             }
         } else if (retval && (fds.revents & POLLOUT)) {
-            int readbytes = BIO_read(write_bio, readbuf, sizeof(readbuf));
-            if (readbytes > 0) {
-                readbytes = sendto(sockfd, readbuf, readbytes, 0, &their_addr, socklen);
-                openssl_log(OPENSSL_LOG_DEB, "Write '%d' bytes to '%s:%d', first byte value: 0x%x(%d)\n",
-                    readbytes, inet_ntoa(their_addr.sin_addr), ntohs(their_addr.sin_port), readbuf[0], readbuf[0]);
+            if (!SSL_is_init_finished(ssl)) {
+                readbytes = BIO_read(write_bio, readbuf, sizeof(readbuf));
+                if (readbytes > 0) {
+                    readbytes = sendto(sockfd, readbuf, readbytes, 0, &my_addr, socklen);
+                    openssl_log(OPENSSL_LOG_DEB, "Write '%d' bytes to '%s:%d', values: %d, first byte value: 0x%x(%d)\n",
+                        readbytes, inet_ntoa(my_addr.sin_addr), ntohs(my_addr.sin_port), readbuf[0], readbuf[0]);
+                }
+            } else {
+                snprintf(readbuf, sizeof(readbuf) - 1, "%s", "This is a DTLS client!");
+                SSL_write(ssl, readbuf, strlen(readbuf));
+                readbytes = BIO_read(write_bio, readbuf, sizeof(readbuf));
+                if (readbytes > 0) {
+                    readbytes = sendto(sockfd, readbuf, readbytes, 0, &my_addr, socklen);
+                    openssl_log(OPENSSL_LOG_DEB, "Write '%d' bytes to '%s:%d', values: %d, first byte value: 0x%x(%d)\n",
+                        readbytes, inet_ntoa(my_addr.sin_addr), ntohs(my_addr.sin_port), readbuf[0], readbuf[0]);
+                }
             }
         }
     }
