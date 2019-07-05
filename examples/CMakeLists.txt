@@ -125,9 +125,20 @@ TARGET_LINK_LIBRARIES(openssl_dtls_client
     ${CRYPTO_LIBRARY}
 )
 
+ADD_EXECUTABLE(openssl_dtls_server2
+    ${SOURCE_PATH}/openssl.c
+    ${SOURCE_PATH}/inet_sock.c
+    ${SOURCE_PATH}/openssl_dtls_server2.c)
+
+TARGET_LINK_LIBRARIES(openssl_dtls_server2
+    ${SSL_LIBRARY}
+    ${CRYPTO_LIBRARY}
+)
+
 INSTALL(PROGRAMS
     ${CMAKE_BINARY_DIR}/openssl_v23_server
     ${CMAKE_BINARY_DIR}/openssl_dtls_server
+    ${CMAKE_BINARY_DIR}/openssl_dtls_server2
     ${CMAKE_BINARY_DIR}/openssl_dtls_client
     DESTINATION
     ${CMAKE_INSTALL_PREFIX}/sbin)
