@@ -2400,6 +2400,9 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     /*
      * Inherit callbacks and flags from X509_STORE if not set use defaults.
      */
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_NOT, "Inherit callbacks and flags from X509_STORE if not set use defaults.");
+#endif
     if (store)
         ret = X509_VERIFY_PARAM_inherit(ctx->param, store->param);
     else

@@ -117,6 +117,9 @@ static void openssl_msg_cb(int write_p, int version, int content_type, const voi
     case DTLS1_VERSION:
         str_version = "DTLS 1.0 ";
         break;
+    case DTLS1_2_VERSION:
+        str_version = "DTLS 1.2 ";
+        break;
     case DTLS1_BAD_VER:
         str_version = "DTLS 1.0 (bad) ";
         break;

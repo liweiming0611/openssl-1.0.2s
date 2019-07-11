@@ -22,7 +22,7 @@ int main(int argc, char **argv)
     openssl_log_init();
     openssl_init();
 
-    ctx = openssl_ctx_new(DTLS_server_method());
+    ctx = openssl_ctx_new(DTLSv1_server_method());
     if (NULL == ctx) {
         goto error;
     }
