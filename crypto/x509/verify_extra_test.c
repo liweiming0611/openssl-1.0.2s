@@ -62,6 +62,10 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssl_log.h>
+#endif
+
 static STACK_OF(X509) *load_certs_from_file(const char *filename)
 {
     STACK_OF(X509) *certs;
@@ -165,6 +169,10 @@ static int test_alt_chains_cert_forgery(void)
 
     if (!X509_STORE_CTX_init(sctx, store, x, untrusted))
         goto err;
+
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "X509_verify_cert enter ...");
+#endif
 
     i = X509_verify_cert(sctx);
 

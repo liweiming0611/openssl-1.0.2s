@@ -255,6 +255,9 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
                                  * later. */
 
         /* If we are self signed, we break */
+#ifdef GRANDSTREAM_NETWORKS
+        ssl_log(SSL_LOG_DEB, "If we are self signed, we break!");
+#endif
         if (cert_self_signed(x))
             break;
         /*
@@ -316,6 +319,10 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
         x = sk_X509_value(ctx->chain, i - 1);
         if (cert_self_signed(x)) {
             /* we have a self signed certificate */
+#ifdef GRANDSTREAM_NETWORKS
+            ssl_log(SSL_LOG_DEB, "We have a self signed certificate!");
+#endif
+
             if (sk_X509_num(ctx->chain) == 1) {
                 /*
                  * We have a single self signed certificate: see if we can
@@ -1412,6 +1419,10 @@ static int check_crl_path(X509_STORE_CTX *ctx, X509 *x)
     crl_ctx.verify_cb = ctx->verify_cb;
 
     /* Verify CRL issuer */
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "X509_verify_cert enter ...");
+#endif
+
     ret = X509_verify_cert(&crl_ctx);
 
     if (ret <= 0)

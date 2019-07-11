@@ -769,6 +769,10 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 #endif
     else {
 #ifndef OPENSSL_NO_X509_VERIFY
+#ifdef GRANDSTREAM_NETWORKS
+        ssl_log(SSL_LOG_DEB, "X509_verify_cert enter ...");
+#endif
+
         i = X509_verify_cert(&ctx);
 #else
         i = 0;
@@ -1137,6 +1141,10 @@ int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
                 SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, ERR_R_X509_LIB);
                 return (0);
             }
+#ifdef GRANDSTREAM_NETWORKS
+            ssl_log(SSL_LOG_DEB, "X509_verify_cert enter ...");
+#endif
+
             X509_verify_cert(&xs_ctx);
             /* Don't leave errors in the queue */
             ERR_clear_error();
@@ -1213,6 +1221,9 @@ int ssl_build_cert_chain(CERT *c, X509_STORE *chain_store, int flags)
     /* Set suite B flags if needed */
     X509_STORE_CTX_set_flags(&xs_ctx,
                              c->cert_flags & SSL_CERT_FLAG_SUITEB_128_LOS);
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "X509_verify_cert enter ...");
+#endif
 
     i = X509_verify_cert(&xs_ctx);
     if (i <= 0 && flags & SSL_BUILD_CHAIN_FLAG_IGNORE_ERROR) {

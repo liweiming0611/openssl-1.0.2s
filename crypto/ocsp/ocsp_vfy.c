@@ -61,6 +61,10 @@
 #include <openssl/err.h>
 #include <string.h>
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssl_log.h>
+#endif
+
 static int ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs,
                             STACK_OF(X509) *certs, X509_STORE *st,
                             unsigned long flags);
@@ -131,6 +135,10 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
         }
 
         X509_STORE_CTX_set_purpose(&ctx, X509_PURPOSE_OCSP_HELPER);
+#ifdef GRANDSTREAM_NETWORKS
+        ssl_log(SSL_LOG_DEB, "X509_verify_cert enter ...");
+#endif
+
         ret = X509_verify_cert(&ctx);
         chain = X509_STORE_CTX_get1_chain(&ctx);
         X509_STORE_CTX_cleanup(&ctx);
@@ -420,6 +428,10 @@ int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
 
         X509_STORE_CTX_set_purpose(&ctx, X509_PURPOSE_OCSP_HELPER);
         X509_STORE_CTX_set_trust(&ctx, X509_TRUST_OCSP_REQUEST);
+#ifdef GRANDSTREAM_NETWORKS
+        ssl_log(SSL_LOG_DEB, "X509_verify_cert enter ...");
+#endif
+
         ret = X509_verify_cert(&ctx);
         X509_STORE_CTX_cleanup(&ctx);
         if (ret <= 0) {

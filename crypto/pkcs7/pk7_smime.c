@@ -64,6 +64,10 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssl_log.h>
+#endif
+
 static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si);
 
 PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
@@ -327,6 +331,10 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
             }
             if (!(flags & PKCS7_NOCRL))
                 X509_STORE_CTX_set0_crls(&cert_ctx, p7->d.sign->crl);
+#ifdef GRANDSTREAM_NETWORKS
+            ssl_log(SSL_LOG_DEB, "X509_verify_cert enter ...");
+#endif
+
             i = X509_verify_cert(&cert_ctx);
             if (i <= 0)
                 j = X509_STORE_CTX_get_error(&cert_ctx);

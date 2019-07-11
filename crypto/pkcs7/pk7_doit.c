@@ -64,6 +64,10 @@
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssl_log.h>
+#endif
+
 static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
                          void *value);
 static ASN1_TYPE *get_attribute(STACK_OF(X509_ATTRIBUTE) *sk, int nid);
@@ -1015,6 +1019,10 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
         goto err;
     }
     X509_STORE_CTX_set_purpose(ctx, X509_PURPOSE_SMIME_SIGN);
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "X509_verify_cert enter ...");
+#endif
+
     i = X509_verify_cert(ctx);
     if (i <= 0) {
         PKCS7err(PKCS7_F_PKCS7_DATAVERIFY, ERR_R_X509_LIB);

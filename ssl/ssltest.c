@@ -189,6 +189,10 @@
 #endif
 #include <openssl/bn.h>
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssl_log.h>
+#endif
+
 /*
  * Or gethostname won't be declared properly
  * on Compaq platforms (at least with DEC C).
@@ -3039,6 +3043,10 @@ static int MS_CALLBACK app_verify_callback(X509_STORE_CTX *ctx, void *arg)
         X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_ALLOW_PROXY_CERTS);
     }
 #ifndef OPENSSL_NO_X509_VERIFY
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "X509_verify_cert enter ...");
+#endif
+
     ok = X509_verify_cert(ctx);
 #endif
 

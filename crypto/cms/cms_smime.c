@@ -61,6 +61,10 @@
 #include "cms_lcl.h"
 #include "asn1_locl.h"
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssl_log.h>
+#endif
+
 static int cms_copy_content(BIO *out, BIO *in, unsigned int flags)
 {
     unsigned char buf[4096];
@@ -279,6 +283,10 @@ static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
     X509_STORE_CTX_set_default(&ctx, "smime_sign");
     if (crls)
         X509_STORE_CTX_set0_crls(&ctx, crls);
+
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "X509_verify_cert enter ...");
+#endif
 
     i = X509_verify_cert(&ctx);
     if (i <= 0) {
