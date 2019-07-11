@@ -1269,6 +1269,10 @@ int ssl3_get_server_certificate(SSL *s)
         p = q;
     }
 
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_NOT, "ssl_verify_cert_chain enter ...\n");
+#endif
+
     i = ssl_verify_cert_chain(s, sk);
     if ((s->verify_mode != SSL_VERIFY_NONE) && (i <= 0)
 #ifndef OPENSSL_NO_KRB5
@@ -1279,6 +1283,10 @@ int ssl3_get_server_certificate(SSL *s)
         al = ssl_verify_alarm_type(s->verify_result);
         SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
                SSL_R_CERTIFICATE_VERIFY_FAILED);
+#ifdef GRANDSTREAM_NETWORKS
+        ssl_log(SSL_LOG_ERR, "SSL_R_CERTIFICATE_VERIFY_FAILED, reason: %s\n", X509_verify_cert_error_string(s->verify_result));
+#endif
+
         goto f_err;
     }
     ERR_clear_error();          /* but we keep s->verify_result */
@@ -1323,6 +1331,10 @@ int ssl3_get_server_certificate(SSL *s)
         al = SSL3_AL_FATAL;
         SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
                SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS);
+#ifdef GRANDSTREAM_NETWORKS
+        ssl_log(SSL_LOG_ERR, "SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS ...\n");
+#endif
+
         goto f_err;
     }
 
@@ -1332,6 +1344,10 @@ int ssl3_get_server_certificate(SSL *s)
         al = SSL3_AL_FATAL;
         SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
                SSL_R_UNKNOWN_CERTIFICATE_TYPE);
+#ifdef GRANDSTREAM_NETWORKS
+        ssl_log(SSL_LOG_ERR, "SSL_R_UNKNOWN_CERTIFICATE_TYPE ...\n");
+#endif
+
         goto f_err;
     }
 
@@ -1342,6 +1358,10 @@ int ssl3_get_server_certificate(SSL *s)
             al = SSL_AD_ILLEGAL_PARAMETER;
             SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
                    SSL_R_WRONG_CERTIFICATE_TYPE);
+#ifdef GRANDSTREAM_NETWORKS
+            ssl_log(SSL_LOG_ERR, "SSL_R_WRONG_CERTIFICATE_TYPE ...\n");
+#endif
+
             goto f_err;
         }
         sc->peer_cert_type = i;

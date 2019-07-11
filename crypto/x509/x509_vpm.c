@@ -68,6 +68,10 @@
 
 #include "vpm_int.h"
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssl_log.h>
+#endif
+
 /* X509_VERIFY_PARAM functions */
 
 #define SET_HOST 0

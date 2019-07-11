@@ -1029,6 +1029,9 @@ int ssl2_set_certificate(SSL *s, int type, int len, const unsigned char *data)
         goto err;
     }
 
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_NOT, "ssl_verify_cert_chain enter ...\n");
+#endif
     i = ssl_verify_cert_chain(s, sk);
 
     if ((s->verify_mode != SSL_VERIFY_NONE) && (i <= 0)) {

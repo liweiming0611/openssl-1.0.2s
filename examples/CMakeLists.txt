@@ -91,16 +91,26 @@ ELSE(CRYPTO_PATH)
     ENDIF(NOT HAVE_CRYPTO_LIB)
 ENDIF(CRYPTO_PATH)
 
+ADD_DEFINITIONS(
+    -g
+)
+
 ADD_EXECUTABLE(openssl_v23_server
     ${SOURCE_PATH}/openssl.c
     ${SOURCE_PATH}/inet_sock.c
     ${SOURCE_PATH}/openssl_v23_server.c)
 
-ADD_DEFINITIONS(
-    -g
+TARGET_LINK_LIBRARIES(openssl_v23_server
+    ${SSL_LIBRARY}
+    ${CRYPTO_LIBRARY}
 )
 
-TARGET_LINK_LIBRARIES(openssl_v23_server
+ADD_EXECUTABLE(openssl_v23_client
+    ${SOURCE_PATH}/openssl.c
+    ${SOURCE_PATH}/inet_sock.c
+    ${SOURCE_PATH}/openssl_v23_client.c)
+
+TARGET_LINK_LIBRARIES(openssl_v23_client
     ${SSL_LIBRARY}
     ${CRYPTO_LIBRARY}
 )
@@ -147,6 +157,7 @@ TARGET_LINK_LIBRARIES(openssl_dtls_server2
 
 INSTALL(PROGRAMS
     ${CMAKE_BINARY_DIR}/openssl_v23_server
+    ${CMAKE_BINARY_DIR}/openssl_v23_client
     ${CMAKE_BINARY_DIR}/openssl_dtls_server
     ${CMAKE_BINARY_DIR}/openssl_dtls_server2
     ${CMAKE_BINARY_DIR}/openssl_dtls_client

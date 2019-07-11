@@ -3595,6 +3595,10 @@ int ssl3_get_client_certificate(SSL *s)
             goto f_err;
         }
     } else {
+#ifdef GRANDSTREAM_NETWORKS
+        ssl_log(SSL_LOG_NOT, "ssl_verify_cert_chain enter ...\n");
+#endif
+
         i = ssl_verify_cert_chain(s, sk);
         if (i <= 0) {
             al = ssl_verify_alarm_type(s->verify_result);

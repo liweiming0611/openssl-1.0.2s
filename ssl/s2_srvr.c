@@ -1092,6 +1092,10 @@ static int request_certificate(SSL *s)
         goto msg_end;
     }
 
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_NOT, "ssl_verify_cert_chain enter ...\n");
+#endif
+
     i = ssl_verify_cert_chain(s, sk);
 
     if (i > 0) {                /* we like the packet, now check the chksum */

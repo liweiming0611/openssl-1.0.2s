@@ -993,6 +993,12 @@ int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent,
 # endif
 
 # ifndef OPENSSL_NO_BIO
+#ifdef GRANDSTREAM_NETWORKS
+char *ASN1_TIME_print2(const ASN1_TIME *tm, char *tmstr, int tmstrlen);
+char *ASN1_GENERALIZEDTIME_print2(const ASN1_GENERALIZEDTIME *tm, char *tmstr, int tmstrlen);
+char *ASN1_UTCTIME_print2(const ASN1_UTCTIME *tm, char *tmstr, int tmstrlen);
+#endif
+
 int X509_NAME_print(BIO *bp, X509_NAME *name, int obase);
 int X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent,
                        unsigned long flags);

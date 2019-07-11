@@ -72,6 +72,10 @@
 #include <openssl/objects.h>
 #include "vpm_int.h"
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssl_log.h>
+#endif
+
 /* CRL score values */
 
 /* No unhandled critical extensions */
@@ -1807,6 +1811,17 @@ static int check_cert_time(X509_STORE_CTX *ctx, X509 *x)
         ptime = &ctx->param->check_time;
     else
         ptime = NULL;
+
+#ifdef GRANDSTREAM_NETWORKS
+    char notPtime[128] = {0};
+    char notBefore[128] = {0};
+    char notAfter[128] = {0};
+    if (ptime) {
+        ssl_log(SSL_LOG_DEB, "    ptime = %s", ASN1_TIME_print2(X509_time_adj(NULL, 0, ptime), notPtime, sizeof(notPtime)));
+    }
+    ssl_log(SSL_LOG_DEB, "notBefore = %s", ASN1_TIME_print2(X509_get_notBefore(x), notBefore, sizeof(notBefore)));
+    ssl_log(SSL_LOG_DEB, " notAfter = %s", ASN1_TIME_print2(X509_get_notAfter(x), notAfter, sizeof(notAfter)));
+#endif
 
     i = X509_cmp_time(X509_get_notBefore(x), ptime);
     if (i == 0) {

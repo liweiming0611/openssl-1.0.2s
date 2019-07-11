@@ -226,7 +226,7 @@ SSL_SESSION *SSL_SESSION_new(void)
 #endif
 
 #ifdef GRANDSTREAM_NETWORKS
-    ssl_log(SSL_LOG_DEB, "Create OpenSSl Session ...\n");
+    ssl_log(SSL_LOG_DEB, "Create OpenSSl Session, session: %p\n", ss);
 #endif
 
     return (ss);

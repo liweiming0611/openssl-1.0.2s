@@ -96,7 +96,7 @@ static void openssl_msg_cb(int write_p, int version, int content_type, const voi
     char msg_buffer[65535] = {0};
     int msg_len = 0;
 
-    str_write_p = write_p ? ">>>" : "<<<";
+    str_write_p = write_p ? "[Write]" : "[Read]";
 
     switch (version) {
     case SSL2_VERSION:

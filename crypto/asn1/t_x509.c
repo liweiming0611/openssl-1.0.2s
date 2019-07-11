@@ -554,3 +554,102 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
     OPENSSL_free(b);
     return (ret);
 }
+
+#ifdef GRANDSTREAM_NETWORKS
+char *ASN1_TIME_print2(const ASN1_TIME *tm, char *tmstr, int tmstrlen)
+{
+    if (tm->type == V_ASN1_UTCTIME)
+        return ASN1_UTCTIME_print2(tm, tmstr, tmstrlen);
+    if (tm->type == V_ASN1_GENERALIZEDTIME)
+        return ASN1_GENERALIZEDTIME_print2(tm, tmstr, tmstrlen);
+
+    return NULL;
+}
+
+char *ASN1_GENERALIZEDTIME_print2(const ASN1_GENERALIZEDTIME *tm, char *tmstr, int tmstrlen)
+{
+    char *v;
+    int gmt = 0;
+    int i;
+    int y = 0, M = 0, d = 0, h = 0, m = 0, s = 0;
+    char *f = NULL;
+    int f_len = 0;
+
+    i = tm->length;
+    v = (char *)tm->data;
+
+    if (i < 12)
+        goto err;
+    if (v[i - 1] == 'Z')
+        gmt = 1;
+    for (i = 0; i < 12; i++)
+        if ((v[i] > '9') || (v[i] < '0'))
+            goto err;
+    y = (v[0] - '0') * 1000 + (v[1] - '0') * 100
+        + (v[2] - '0') * 10 + (v[3] - '0');
+    M = (v[4] - '0') * 10 + (v[5] - '0');
+    if ((M > 12) || (M < 1))
+        goto err;
+    d = (v[6] - '0') * 10 + (v[7] - '0');
+    h = (v[8] - '0') * 10 + (v[9] - '0');
+    m = (v[10] - '0') * 10 + (v[11] - '0');
+    if (tm->length >= 14 &&
+        (v[12] >= '0') && (v[12] <= '9') &&
+        (v[13] >= '0') && (v[13] <= '9')) {
+        s = (v[12] - '0') * 10 + (v[13] - '0');
+        /* Check for fractions of seconds. */
+        if (tm->length >= 15 && v[14] == '.') {
+            int l = tm->length;
+            f = &v[14];         /* The decimal point. */
+            f_len = 1;
+            while (14 + f_len < l && f[f_len] >= '0' && f[f_len] <= '9')
+                ++f_len;
+        }
+    }
+
+    snprintf(tmstr, tmstrlen, "%s %2d %02d:%02d:%02d%.*s %d%s",
+        mon[M - 1], d, h, m, s, f_len, f, y, (gmt) ? " GMT" : "");
+
+    return tmstr;
+ err:
+    return NULL;
+}
+
+char *ASN1_UTCTIME_print2(const ASN1_UTCTIME *tm, char *tmstr, int tmstrlen)
+{
+    const char *v;
+    int gmt = 0;
+    int i;
+    int y = 0, M = 0, d = 0, h = 0, m = 0, s = 0;
+
+    i = tm->length;
+    v = (const char *)tm->data;
+
+    if (i < 10)
+        goto err;
+    if (v[i - 1] == 'Z')
+        gmt = 1;
+    for (i = 0; i < 10; i++)
+        if ((v[i] > '9') || (v[i] < '0'))
+            goto err;
+    y = (v[0] - '0') * 10 + (v[1] - '0');
+    if (y < 50)
+        y += 100;
+    M = (v[2] - '0') * 10 + (v[3] - '0');
+    if ((M > 12) || (M < 1))
+        goto err;
+    d = (v[4] - '0') * 10 + (v[5] - '0');
+    h = (v[6] - '0') * 10 + (v[7] - '0');
+    m = (v[8] - '0') * 10 + (v[9] - '0');
+    if (tm->length >= 12 &&
+        (v[10] >= '0') && (v[10] <= '9') && (v[11] >= '0') && (v[11] <= '9'))
+        s = (v[10] - '0') * 10 + (v[11] - '0');
+
+    snprintf(tmstr, tmstrlen, "%s %2d %02d:%02d:%02d %d%s",
+        mon[M - 1], d, h, m, s, y + 1900, (gmt) ? " GMT" : "");
+
+    return tmstr;
+ err:
+    return NULL;
+}
+#endif
