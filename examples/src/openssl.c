@@ -410,6 +410,8 @@ int openssl_init(void)
 #define CLIENT_CA   "ClientCAcert.pem"
 #define CLIENT_KEY  "ClientPrivkey.pem"
 
+#define CA          "ca.crt"
+
 int openssl_load_cert_file(SSL_CTX *ctx, int csopt)
 {
     if (csopt) {
@@ -432,6 +434,11 @@ int openssl_load_cert_file(SSL_CTX *ctx, int csopt)
             ERR_print_errors_fp(stdout);
             return -1;
         }
+    }
+
+    if (SSL_CTX_load_verify_locations(ctx, OPENSSL_CA_PATH "/" CA, NULL) <= 0) {
+        ERR_print_errors_fp(stdout);
+        return -1;
     }
 
     if (!SSL_CTX_check_private_key(ctx)) {

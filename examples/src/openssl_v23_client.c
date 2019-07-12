@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     if (NULL == ctx) {
         goto error;
     }
-    //SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, NULL);
+    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
 
     if (openssl_load_cert_file(ctx, 0)) {
         goto error;
