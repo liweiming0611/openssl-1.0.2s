@@ -62,6 +62,10 @@
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssl_log.h>
+#endif
+
 static void x509v3_cache_extensions(X509 *x);
 
 static int check_ssl_ca(const X509 *x);
@@ -239,6 +243,10 @@ int X509_PURPOSE_add(int id, int trust, int flags,
     ptmp->trust = trust;
     ptmp->check_purpose = ck;
     ptmp->usr_data = arg;
+
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "ptmp->name: %s, ptmp->sname: %s", ptmp->name, ptmp->sname);
+#endif
 
     /* If its a new entry manage the dynamic table */
     if (idx == -1) {
@@ -508,6 +516,14 @@ static void x509v3_cache_extensions(X509 *x)
     x->skid = X509_get_ext_d2i(x, NID_subject_key_identifier, NULL, NULL);
     x->akid = X509_get_ext_d2i(x, NID_authority_key_identifier, NULL, NULL);
     /* Does subject name match issuer ? */
+#ifdef GRANDSTREAM_NETWORKS
+    char subjectname[256] = {0};
+    char issuername[256] = {0};
+    ssl_log(SSL_LOG_NOT, "Does subject name match issuer ?");
+    ssl_log(SSL_LOG_NOT, " subjectnaem: %s", X509_NAME_oneline(X509_get_subject_name(x), subjectname, sizeof(subjectname)));
+    ssl_log(SSL_LOG_NOT, "  issuername: %s", X509_NAME_oneline(X509_get_issuer_name(x), issuername, sizeof(issuername)));
+    ssl_log(SSL_LOG_NOT, "serialnumber: %lu", ASN1_INTEGER_get(X509_get_serialNumber(x)));
+#endif
     if (!X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x))) {
         x->ex_flags |= EXFLAG_SI;
         /* If SKID matches AKID also indicate self signed */
@@ -604,6 +620,10 @@ static int check_ssl_ca(const X509 *x)
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
                                     int ca)
 {
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "%s enter ...", __FUNCTION__);
+#endif
+
     if (xku_reject(x, XKU_SSL_CLIENT))
         return 0;
     if (ca)
@@ -628,6 +648,10 @@ static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
 static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x,
                                     int ca)
 {
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "%s enter ...", __FUNCTION__);
+#endif
+
     if (xku_reject(x, XKU_SSL_SERVER | XKU_SGC))
         return 0;
     if (ca)
@@ -645,6 +669,10 @@ static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x,
 static int check_purpose_ns_ssl_server(const X509_PURPOSE *xp, const X509 *x,
                                        int ca)
 {
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "%s enter ...", __FUNCTION__);
+#endif
+
     int ret;
     ret = check_purpose_ssl_server(xp, x, ca);
     if (!ret || ca)
@@ -685,6 +713,10 @@ static int purpose_smime(const X509 *x, int ca)
 static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x,
                                     int ca)
 {
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "%s enter ...", __FUNCTION__);
+#endif
+
     int ret;
     ret = purpose_smime(x, ca);
     if (!ret || ca)
@@ -697,6 +729,10 @@ static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x,
 static int check_purpose_smime_encrypt(const X509_PURPOSE *xp, const X509 *x,
                                        int ca)
 {
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "%s enter ...", __FUNCTION__);
+#endif
+
     int ret;
     ret = purpose_smime(x, ca);
     if (!ret || ca)
@@ -709,6 +745,10 @@ static int check_purpose_smime_encrypt(const X509_PURPOSE *xp, const X509 *x,
 static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x,
                                   int ca)
 {
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "%s enter ...", __FUNCTION__);
+#endif
+
     if (ca) {
         int ca_ret;
         if ((ca_ret = check_ca(x)) != 2)
@@ -732,6 +772,10 @@ static int ocsp_helper(const X509_PURPOSE *xp, const X509 *x, int ca)
      * Must be a valid CA.  Should we really support the "I don't know" value
      * (2)?
      */
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "%s enter ...", __FUNCTION__);
+#endif
+
     if (ca)
         return check_ca(x);
     /* leaf certificate is checked in OCSP_verify() */
@@ -742,6 +786,9 @@ static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
                                         int ca)
 {
     int i_ext;
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "%s enter ...", __FUNCTION__);
+#endif
 
     /* If ca is true we must return if this is a valid CA certificate. */
     if (ca)
@@ -775,6 +822,10 @@ static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
 
 static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca)
 {
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "%s enter ...", __FUNCTION__);
+#endif
+
     return 1;
 }
 
@@ -821,10 +872,42 @@ int X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid)
         return X509_V_OK;
 
     /* Check key ids (if present) */
+#ifdef GRANDSTREAM_NETWORKS
+
+    if (akid->keyid && issuer->skid) {
+        char akidkeyid[512] = {0};
+        int akidkeyidlen = 0, i;
+        char issuerskid[512] = {0};
+        int issuerskidlen = 0;
+
+        for (i = 0; i < akid->keyid->length; i++) {
+            akidkeyidlen += snprintf(akidkeyid + akidkeyidlen, sizeof(akidkeyid) - 1 - akidkeyidlen, "%0X:",
+                akid->keyid->data[i]);
+        }
+
+        for (i = 0; i < issuer->skid->length; i++) {
+            issuerskidlen += snprintf(issuerskid + issuerskidlen, sizeof(issuerskid) - 1 - issuerskidlen, "%0X:",
+                issuer->skid->data[i]);
+        }
+
+        ssl_log(SSL_LOG_NOT, "Check key ids:\n"
+            "\t akid->keyid->data: %s\n"
+            "\tissuer->skid->data: %s",
+            akidkeyid, issuerskid);
+    }
+#endif
+
     if (akid->keyid && issuer->skid &&
         ASN1_OCTET_STRING_cmp(akid->keyid, issuer->skid))
         return X509_V_ERR_AKID_SKID_MISMATCH;
     /* Check serial number */
+#ifdef GRANDSTREAM_NETWORKS
+    if (akid->serial) {
+        ssl_log(SSL_LOG_NOT, "Check serial number, issuer serial: %lu, akid->serial: %lu",
+            ASN1_INTEGER_get(X509_get_serialNumber(issuer)), ASN1_INTEGER_get(akid->serial));
+    }
+#endif
+
     if (akid->serial &&
         ASN1_INTEGER_cmp(X509_get_serialNumber(issuer), akid->serial))
         return X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH;

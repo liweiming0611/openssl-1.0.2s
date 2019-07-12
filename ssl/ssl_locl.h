@@ -904,7 +904,7 @@ const SSL_METHOD *func_name(void)  \
                 ssl3_callback_ctrl, \
                 ssl3_ctx_callback_ctrl, \
         }; \
-        ssl_log(SSL_LOG_VEB, "%s enter ...\n", __FUNCTION__); \
+        ssl_log(SSL_LOG_VEB, "%s enter ...", __FUNCTION__); \
         return &func_name##_data; \
         }
 
@@ -942,7 +942,7 @@ const SSL_METHOD *func_name(void)  \
                 ssl3_callback_ctrl, \
                 ssl3_ctx_callback_ctrl, \
         }; \
-        ssl_log(SSL_LOG_VEB, "%s enter ...\n", __FUNCTION__); \
+        ssl_log(SSL_LOG_VEB, "%s enter ...", __FUNCTION__); \
         return &func_name##_data; \
         }
 
@@ -980,7 +980,7 @@ const SSL_METHOD *func_name(void)  \
         ssl3_callback_ctrl, \
         ssl3_ctx_callback_ctrl, \
         }; \
-        ssl_log(SSL_LOG_VEB, "%s enter ...\n", __FUNCTION__); \
+        ssl_log(SSL_LOG_VEB, "%s enter ...", __FUNCTION__); \
         return &func_name##_data; \
         }
 
@@ -1018,7 +1018,7 @@ const SSL_METHOD *func_name(void)  \
                 ssl2_callback_ctrl,     /* local */ \
                 ssl2_ctx_callback_ctrl, /* local */ \
         }; \
-        ssl_log(SSL_LOG_VEB, "%s enter ...\n", __FUNCTION__); \
+        ssl_log(SSL_LOG_VEB, "%s enter ...", __FUNCTION__); \
         return &func_name##_data; \
         }
 
@@ -1057,7 +1057,7 @@ const SSL_METHOD *func_name(void)  \
                 ssl3_callback_ctrl, \
                 ssl3_ctx_callback_ctrl, \
         }; \
-        ssl_log(SSL_LOG_VEB, "%s enter ...\n", __FUNCTION__); \
+        ssl_log(SSL_LOG_VEB, "%s enter ...", __FUNCTION__); \
         return &func_name##_data; \
         }
 

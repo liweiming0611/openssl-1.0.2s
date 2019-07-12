@@ -27,7 +27,7 @@ static void openssl_log_format(int level, const char *file, int line, const char
         break;
     }
 
-    openssl_log(openssl_level, "[%6s:%04d] %s", file, line, msg);
+    openssl_log(openssl_level, "[%6s:%04d] %s\n", file, line, msg);
 }
 
 void openssl_log_init(void)

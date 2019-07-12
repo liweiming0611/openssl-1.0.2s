@@ -134,7 +134,7 @@ void ssl_log_vsprintf(int level, const char *file, int line, const char *format,
 {
     char *log_buffer = NULL;
     char *file_name = NULL;
-#if 0
+#if 1
     char *level_str = NULL;
     struct timeval tv_now;
     time_t tt;
@@ -153,7 +153,7 @@ void ssl_log_vsprintf(int level, const char *file, int line, const char *format,
     if (ssl_logcb) {
         ssl_logcb(level, file_name ? ++file_name : file, line, log_buffer);
     }
-#if 0
+#if 1
     else {
         switch (level) {
         case SSL_LOG_ERR:
@@ -180,7 +180,7 @@ void ssl_log_vsprintf(int level, const char *file, int line, const char *format,
         t = localtime(&tt);
         gettimeofday(&tv_now, NULL);
 
-        fprintf(stderr, "[%4d-%02d-%02d %02d:%02d:%02d:%03ld] %s [%05ld]   -- %s:%d  %s",
+        fprintf(stderr, "[%4d-%02d-%02d %02d:%02d:%02d:%03ld] %s [%05ld]   -- %s:%d  %s\n\n",
             t->tm_year+1900, t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, tv_now.tv_usec,
             level_str, syscall(SYS_gettid), file_name ? ++file_name : file, line, log_buffer);
     }

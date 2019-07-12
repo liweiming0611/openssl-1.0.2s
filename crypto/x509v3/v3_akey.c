@@ -64,6 +64,10 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 
+#ifdef GRANDSTREAM_NETWORKS
+#include <openssl/ssl_log.h>
+#endif
+
 static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
                                                  AUTHORITY_KEYID *akeyid,
                                                  STACK_OF(CONF_VALUE)
@@ -101,6 +105,11 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         X509V3_add_value("serial", tmp, &extlist);
         OPENSSL_free(tmp);
     }
+
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_NOT, "%s enter ...", __FUNCTION__);
+#endif
+
     return extlist;
 }
 
@@ -128,6 +137,10 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     X509_EXTENSION *ext;
     X509 *cert;
     AUTHORITY_KEYID *akeyid;
+
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_NOT, "%s enter ...", __FUNCTION__);
+#endif
 
     for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
         cnf = sk_CONF_VALUE_value(values, i);

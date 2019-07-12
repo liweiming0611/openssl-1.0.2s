@@ -170,7 +170,7 @@ int ssl23_connect(SSL *s)
 
 #ifdef GRANDSTREAM_NETWORKS
     char state_buffer[256] = {0};
-    ssl_log(SSL_LOG_NOT, "%s enter, s->in_handshake: %d, state: %s\n", __FUNCTION__, s->in_handshake, SSL_state_string_long(s));
+    ssl_log(SSL_LOG_NOT, "%s enter, s->in_handshake: %d, state: %s", __FUNCTION__, s->in_handshake, SSL_state_string_long(s));
 #endif
 
     for (;;) {
@@ -251,7 +251,7 @@ int ssl23_connect(SSL *s)
         case SSL23_ST_CR_SRVR_HELLO_B:
             ret = ssl23_get_server_hello(s);
 #ifdef GRANDSTREAM_NETWORKS
-            ssl_log(SSL_LOG_NOT, "OpenSSL state change from '%s' to '%s'\n", state_buffer, SSL_state_string_long(s));
+            ssl_log(SSL_LOG_NOT, "OpenSSL state change from '%s' to '%s'", state_buffer, SSL_state_string_long(s));
 #endif
             if (ret >= 0)
                 cb = NULL;
