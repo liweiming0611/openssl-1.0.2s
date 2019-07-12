@@ -670,6 +670,9 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
     /* If certificate matches all OK */
     if (ctx->check_issued(ctx, x, obj.data.x509)) {
         *issuer = obj.data.x509;
+#ifdef GRANDSTREAM_NETWORKS
+        ssl_log(SSL_LOG_DEB, "If certificate matches all OK!");
+#endif
         return 1;
     }
     X509_OBJECT_free_contents(&obj);
@@ -694,6 +697,10 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
             if (ctx->check_issued(ctx, x, pobj->data.x509)) {
                 *issuer = pobj->data.x509;
                 X509_OBJECT_up_ref_count(pobj);
+#ifdef GRANDSTREAM_NETWORKS
+                ssl_log(SSL_LOG_DEB, "Look through all matching certs for suitable issuer!");
+#endif
+
                 ret = 1;
                 break;
             }

@@ -1270,7 +1270,7 @@ int ssl3_get_server_certificate(SSL *s)
     }
 
 #ifdef GRANDSTREAM_NETWORKS
-    ssl_log(SSL_LOG_NOT, "ssl_verify_cert_chain enter ...\n");
+    ssl_log(SSL_LOG_NOT, "ssl_verify_cert_chain enter ...");
 #endif
 
     i = ssl_verify_cert_chain(s, sk);
@@ -1284,7 +1284,7 @@ int ssl3_get_server_certificate(SSL *s)
         SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
                SSL_R_CERTIFICATE_VERIFY_FAILED);
 #ifdef GRANDSTREAM_NETWORKS
-        ssl_log(SSL_LOG_ERR, "SSL_R_CERTIFICATE_VERIFY_FAILED, reason: %s\n", X509_verify_cert_error_string(s->verify_result));
+        ssl_log(SSL_LOG_ERR, "SSL_R_CERTIFICATE_VERIFY_FAILED, reason: %s", X509_verify_cert_error_string(s->verify_result));
 #endif
 
         goto f_err;

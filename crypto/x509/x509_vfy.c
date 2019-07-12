@@ -233,6 +233,9 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
     CRYPTO_add(&ctx->cert->references, 1, CRYPTO_LOCK_X509);
     ctx->last_untrusted = 1;
 
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "We use a temporary STACK so we can chop and hack at it.");
+#endif
     /* We use a temporary STACK so we can chop and hack at it */
     if (ctx->untrusted != NULL
         && (sktmp = sk_X509_dup(ctx->untrusted)) == NULL) {
@@ -255,16 +258,20 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
                                  * later. */
 
         /* If we are self signed, we break */
+        if (cert_self_signed(x)) {
 #ifdef GRANDSTREAM_NETWORKS
-        ssl_log(SSL_LOG_DEB, "If we are self signed, we break!");
+            ssl_log(SSL_LOG_DEB, "If we are self signed, we break!");
 #endif
-        if (cert_self_signed(x))
             break;
+        }
         /*
          * If asked see if we can find issuer in trusted store first
          */
         if (ctx->param->flags & X509_V_FLAG_TRUSTED_FIRST) {
             ok = ctx->get_issuer(&xtmp, ctx, x);
+#ifdef GRANDSTREAM_NETWORKS
+            ssl_log(SSL_LOG_DEB, "If asked see if we can find issuer in trusted store first!");
+#endif
             if (ok < 0) {
                 ctx->error = X509_V_ERR_STORE_LOOKUP;
                 goto err;
@@ -300,6 +307,10 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
                 continue;
             }
         }
+#ifdef GRANDSTREAM_NETWORKS
+        ssl_log(SSL_LOG_DEB, "If we were passed a cert chain, use it first!");
+#endif
+
         break;
     }
 
@@ -354,6 +365,10 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
                 /*
                  * extract and save self signed certificate for later use
                  */
+#ifdef GRANDSTREAM_NETWORKS
+                ssl_log(SSL_LOG_DEB, "Extract and save self signed certificate for later use!");
+#endif
+
                 chain_ss = sk_X509_pop(ctx->chain);
                 ctx->last_untrusted--;
                 num--;
@@ -465,6 +480,10 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
             goto err;
     }
 
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "We have the chain complete: now we need to check its purpose!");
+#endif
+
     /* We have the chain complete: now we need to check its purpose */
     ok = check_chain_extensions(ctx);
 
@@ -506,6 +525,10 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
     }
 
     /* At this point, we have a chain and need to verify it */
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "At this point, we have a chain and need to verify it, ctx->verify: %p", ctx->verify);
+#endif
+
     if (ctx->verify != NULL)
         ok = ctx->verify(ctx);
     else
@@ -1934,6 +1957,9 @@ static int internal_verify(X509_STORE_CTX *ctx)
         xs->valid = 1;
 
  check_cert:
+ #ifdef GRANDSTREAM_NETWORKS
+        ssl_log(SSL_LOG_NOT, "OpenSSL check cert time!");
+ #endif
         ok = check_cert_time(ctx, xs);
         if (!ok)
             goto end;

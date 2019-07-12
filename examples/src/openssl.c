@@ -27,7 +27,7 @@ static void openssl_log_format(int level, const char *file, int line, const char
         break;
     }
 
-    openssl_log(openssl_level, "[%s:%04d] %s", file, line, msg);
+    openssl_log(openssl_level, "[%6s:%04d] %s", file, line, msg);
 }
 
 void openssl_log_init(void)
@@ -436,15 +436,16 @@ int openssl_load_cert_file(SSL_CTX *ctx, int csopt)
         }
     }
 
-    if (SSL_CTX_load_verify_locations(ctx, OPENSSL_CA_PATH "/" CA, NULL) <= 0) {
-        ERR_print_errors_fp(stdout);
-        return -1;
-    }
-
     if (!SSL_CTX_check_private_key(ctx)) {
         ERR_print_errors_fp(stdout);
         return -1;
     }
+
+    if (!SSL_CTX_load_verify_locations(ctx, OPENSSL_CA_PATH "/" CA, NULL)) {
+        ERR_print_errors_fp(stdout);
+        return -1;
+    }
+    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
 
     return 0;
 }

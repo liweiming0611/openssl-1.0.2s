@@ -160,7 +160,7 @@ int SSL_get_ex_data_X509_STORE_CTX_idx(void)
         }
 
 #ifdef GRANDSTREAM_NETWORKS
-        ssl_log(SSL_LOG_DEB, "Check alignment, practically always true, ssl_x509_store_ctx_idx: %d\n", ssl_x509_store_ctx_idx);
+        ssl_log(SSL_LOG_DEB, "Check alignment, practically always true, ssl_x509_store_ctx_idx: %d", ssl_x509_store_ctx_idx);
 #endif
 
         return ret;
@@ -187,7 +187,7 @@ int SSL_get_ex_data_X509_STORE_CTX_idx(void)
             CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
 
 #ifdef GRANDSTREAM_NETWORKS
-        ssl_log(SSL_LOG_DEB, "Check alignment, practically always true, ssl_x509_store_ctx_idx: %d\n", ssl_x509_store_ctx_idx);
+        ssl_log(SSL_LOG_DEB, "Check alignment, practically always true, ssl_x509_store_ctx_idx: %d", ssl_x509_store_ctx_idx);
 #endif
 
         return ssl_x509_store_ctx_idx;
