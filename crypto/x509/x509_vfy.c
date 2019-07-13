@@ -470,6 +470,18 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
      */
     if (trust != X509_TRUST_TRUSTED && !bad_chain) {
         if ((chain_ss == NULL) || !ctx->check_issued(ctx, x, chain_ss)) {
+#ifdef GRANDSTREAM_NETWORKS
+            char subjectname[256] = {0};
+            char issuername[256] = {0};
+            ssl_log(SSL_LOG_NOT, "\n"
+                "\t subjectnaem: %s\n"
+                "\t  issuername: %s\n"
+                "\tserialnumber: %lu",
+                X509_NAME_oneline(X509_get_subject_name(x), subjectname, sizeof(subjectname)),
+                X509_NAME_oneline(X509_get_issuer_name(x), issuername, sizeof(issuername)),
+                ASN1_INTEGER_get(X509_get_serialNumber(x)));
+#endif
+
             if (ctx->last_untrusted >= num)
                 ctx->error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY;
             else

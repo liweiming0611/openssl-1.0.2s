@@ -447,6 +447,11 @@ int openssl_load_cert_file(SSL_CTX *ctx, int csopt)
     }
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
 
+    if (!SSL_CTX_set_default_verify_paths(ctx)) {
+        ERR_print_errors_fp(stdout);
+        return -1;
+    }
+
     return 0;
 }
 
