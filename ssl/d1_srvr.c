@@ -538,6 +538,9 @@ int dtls1_accept(SSL *s)
 
         case SSL3_ST_SW_CERT_REQ_A:
         case SSL3_ST_SW_CERT_REQ_B:
+#ifdef GRANDSTREAM_NETWORKS
+            ssl_log(SSL_LOG_NOT, "No cert request, s->verify_mode: 0x%02x", s->verify_mode);
+#endif
             if (                /* don't request cert unless asked for it: */
                    !(s->verify_mode & SSL_VERIFY_PEER) ||
                    /*

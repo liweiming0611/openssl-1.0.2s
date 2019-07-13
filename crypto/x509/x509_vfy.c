@@ -331,7 +331,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
         if (cert_self_signed(x)) {
             /* we have a self signed certificate */
 #ifdef GRANDSTREAM_NETWORKS
-            ssl_log(SSL_LOG_DEB, "We have a self signed certificate!");
+            ssl_log(SSL_LOG_DEB, "We have a self signed certificate, sk_X509_num(ctx->chain): %d", sk_X509_num(ctx->chain));
 #endif
 
             if (sk_X509_num(ctx->chain) == 1) {
@@ -374,6 +374,18 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
                 num--;
                 j--;
                 x = sk_X509_value(ctx->chain, num - 1);
+
+#ifdef GRANDSTREAM_NETWORKS
+                char subjectname[256] = {0};
+                char issuername[256] = {0};
+                ssl_log(SSL_LOG_NOT, "\n"
+                    "\t subjectnaem: %s\n"
+                    "\t  issuername: %s\n"
+                    "\tserialnumber: %lu",
+                    X509_NAME_oneline(X509_get_subject_name(x), subjectname, sizeof(subjectname)),
+                    X509_NAME_oneline(X509_get_issuer_name(x), issuername, sizeof(issuername)),
+                    ASN1_INTEGER_get(X509_get_serialNumber(x)));
+#endif
             }
         }
         /* We now lookup certs from the certificate store */
@@ -486,12 +498,10 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 
     /* We have the chain complete: now we need to check its purpose */
     ok = check_chain_extensions(ctx);
-
     if (!ok)
         goto err;
 
     /* Check name constraints */
-
     ok = check_name_constraints(ctx);
 
     if (!ok)
@@ -509,7 +519,9 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
      * Check revocation status: we do this after copying parameters because
      * they may be needed for CRL signature verification.
      */
-
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_NOT, "Check revocation status!");
+#endif
     ok = ctx->check_revocation(ctx);
     if (!ok)
         goto err;
@@ -538,6 +550,9 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 
 #ifndef OPENSSL_NO_RFC3779
     /* RFC 3779 path validation, now that CRL check has been done */
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "RFC 3779 path validation, now that CRL check has been done!");
+#endif
     ok = v3_asid_validate_path(ctx);
     if (!ok)
         goto err;
@@ -547,6 +562,10 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 #endif
 
     /* If we get this far evaluate policies */
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_DEB, "If we get this far evaluate policies!");
+#endif
+
     if (!bad_chain && (ctx->param->flags & X509_V_FLAG_POLICY_CHECK))
         ok = ctx->check_policy(ctx);
     if (!ok)
@@ -951,6 +970,18 @@ static int check_trust(X509_STORE_CTX *ctx)
     for (i = ctx->last_untrusted; i < sk_X509_num(ctx->chain); i++) {
         x = sk_X509_value(ctx->chain, i);
         ok = X509_check_trust(x, ctx->param->trust, 0);
+#ifdef GRANDSTREAM_NETWORKS
+        char subjectname[256] = {0};
+        char issuername[256] = {0};
+        ssl_log(SSL_LOG_NOT, "\n"
+            "\t subjectnaem: %s, ok: %d\n"
+            "\t  issuername: %s, ok: %d\n"
+            "\tserialnumber: %lu, ok: %d",
+            X509_NAME_oneline(X509_get_subject_name(x), subjectname, sizeof(subjectname)), ok,
+            X509_NAME_oneline(X509_get_issuer_name(x), issuername, sizeof(issuername)), ok,
+            ASN1_INTEGER_get(X509_get_serialNumber(x)), ok);
+#endif
+
         /* If explicitly trusted return trusted */
         if (ok == X509_TRUST_TRUSTED)
             return X509_TRUST_TRUSTED;
@@ -1847,14 +1878,22 @@ static int check_cert_time(X509_STORE_CTX *ctx, X509 *x)
         ptime = NULL;
 
 #ifdef GRANDSTREAM_NETWORKS
-    char notPtime[128] = {0};
     char notBefore[128] = {0};
     char notAfter[128] = {0};
-    if (ptime) {
-        ssl_log(SSL_LOG_DEB, "    ptime = %s", ASN1_TIME_print2(X509_time_adj(NULL, 0, ptime), notPtime, sizeof(notPtime)));
-    }
-    ssl_log(SSL_LOG_DEB, "notBefore = %s", ASN1_TIME_print2(X509_get_notBefore(x), notBefore, sizeof(notBefore)));
-    ssl_log(SSL_LOG_DEB, " notAfter = %s", ASN1_TIME_print2(X509_get_notAfter(x), notAfter, sizeof(notAfter)));
+    char subjectname[256] = {0};
+    char issuername[256] = {0};
+
+    ssl_log(SSL_LOG_NOT, "\n"
+        "\t subjectnaem: %s\n"
+        "\t  issuername: %s\n"
+        "\tserialnumber: %lud\n"
+        "\t   notBefore: %s\n"
+        "\t    notAfter: %s",
+        X509_NAME_oneline(X509_get_subject_name(x), subjectname, sizeof(subjectname)),
+        X509_NAME_oneline(X509_get_issuer_name(x), issuername, sizeof(issuername)),
+        ASN1_INTEGER_get(X509_get_serialNumber(x)),
+        ASN1_TIME_print2(X509_get_notBefore(x), notBefore, sizeof(notBefore)),
+        ASN1_TIME_print2(X509_get_notAfter(x), notAfter, sizeof(notAfter)));
 #endif
 
     i = X509_cmp_time(X509_get_notBefore(x), ptime);

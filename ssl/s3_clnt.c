@@ -1254,6 +1254,19 @@ int ssl3_get_server_certificate(SSL *s)
             SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE, ERR_R_ASN1_LIB);
             goto f_err;
         }
+
+#ifdef GRANDSTREAM_NETWORKS
+        char subjectname[256] = {0};
+        char issuername[256] = {0};
+        ssl_log(SSL_LOG_NOT, "\n"
+            "\t subjectnaem: %s\n"
+            "\t  issuername: %s\n"
+            "\tserialnumber: %lu",
+            X509_NAME_oneline(X509_get_subject_name(x), subjectname, sizeof(subjectname)),
+            X509_NAME_oneline(X509_get_issuer_name(x), issuername, sizeof(issuername)),
+            ASN1_INTEGER_get(X509_get_serialNumber(x)));
+#endif
+
         if (q != (p + l)) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
@@ -1270,7 +1283,7 @@ int ssl3_get_server_certificate(SSL *s)
     }
 
 #ifdef GRANDSTREAM_NETWORKS
-    ssl_log(SSL_LOG_NOT, "ssl_verify_cert_chain enter ...");
+    ssl_log(SSL_LOG_NOT, "ssl_verify_cert_chain enter, s->verify_mode: 0x%02x", s->verify_mode);
 #endif
 
     i = ssl_verify_cert_chain(s, sk);

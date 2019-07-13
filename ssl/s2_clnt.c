@@ -1030,7 +1030,7 @@ int ssl2_set_certificate(SSL *s, int type, int len, const unsigned char *data)
     }
 
 #ifdef GRANDSTREAM_NETWORKS
-    ssl_log(SSL_LOG_NOT, "ssl_verify_cert_chain enter ...\n");
+    ssl_log(SSL_LOG_NOT, "ssl_verify_cert_chain enter, s->verify_mode: 0x%02x", s->verify_mode);
 #endif
     i = ssl_verify_cert_chain(s, sk);
 

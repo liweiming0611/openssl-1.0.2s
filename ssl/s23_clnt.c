@@ -227,7 +227,7 @@ int ssl23_connect(SSL *s)
             s->ctx->stats.sess_connect++;
             s->init_num = 0;
 #ifdef GRANDSTREAM_NETWORKS
-            ssl_log(SSL_LOG_NOT, "OpenSSL state change from '%s' to '%s'\n", state_buffer, SSL_state_string_long(s));
+            ssl_log(SSL_LOG_NOT, "OpenSSL state change from '%s' to '%s'", state_buffer, SSL_state_string_long(s));
 #endif
 
             break;
@@ -242,7 +242,7 @@ int ssl23_connect(SSL *s)
             s->state = SSL23_ST_CR_SRVR_HELLO_A;
             s->init_num = 0;
 #ifdef GRANDSTREAM_NETWORKS
-            ssl_log(SSL_LOG_NOT, "OpenSSL state change from '%s' to '%s'\n", state_buffer, SSL_state_string_long(s));
+            ssl_log(SSL_LOG_NOT, "OpenSSL state change from '%s' to '%s'", state_buffer, SSL_state_string_long(s));
 #endif
 
             break;

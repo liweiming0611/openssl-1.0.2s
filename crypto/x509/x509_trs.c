@@ -111,7 +111,7 @@ int (*X509_TRUST_set_default(int (*trust) (int, X509 *, int))) (int, X509 *,
     oldtrust = default_trust;
     default_trust = trust;
     return oldtrust;
-}
+};
 
 int X509_check_trust(X509 *x, int id, int flags)
 {

@@ -311,6 +311,10 @@ int ssl2_accept(SSL *s)
              * don't do a 'request certificate' if we don't want to, or we
              * already have one, and we only want to do it once.
              */
+#ifdef GRANDSTREAM_NETWORKS
+            ssl_log(SSL_LOG_NOT, "No cert request, s->verify_mode: 0x%02x", s->verify_mode);
+#endif
+
             if (!(s->verify_mode & SSL_VERIFY_PEER) ||
                 ((s->session->peer != NULL) &&
                  (s->verify_mode & SSL_VERIFY_CLIENT_ONCE))) {
@@ -1026,6 +1030,9 @@ static int request_certificate(SSL *s)
              * this is the one place where we can recover from an SSL 2.0
              * error
              */
+#ifdef GRANDSTREAM_NETWORKS
+            ssl_log(SSL_LOG_NOT, "No cert request, s->verify_mode: 0x%02x", s->verify_mode);
+#endif
 
             if (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT) {
                 ssl2_return_error(s, SSL2_PE_BAD_CERTIFICATE);

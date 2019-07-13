@@ -615,6 +615,9 @@ int ssl3_accept(SSL *s)
 
         case SSL3_ST_SW_CERT_REQ_A:
         case SSL3_ST_SW_CERT_REQ_B:
+#ifdef GRANDSTREAM_NETWORKS
+            ssl_log(SSL_LOG_NOT, "No cert request, s->verify_mode: 0x%02x", s->verify_mode);
+#endif
             if (                /* don't request cert unless asked for it: */
                    !(s->verify_mode & SSL_VERIFY_PEER) ||
                    /*
@@ -1696,6 +1699,11 @@ int ssl3_get_client_hello(SSL *s)
 #endif
             s->s3->tmp.new_cipher = s->session->cipher;
     }
+
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_NOT, "Cert verify mode, s->verify_mode: 0x%02x", s->verify_mode);
+#endif
+
 
     if (!SSL_USE_SIGALGS(s) || !(s->verify_mode & SSL_VERIFY_PEER)) {
         if (!ssl3_digest_cached_records(s))
@@ -3499,6 +3507,10 @@ int ssl3_get_client_certificate(SSL *s)
     if (!ok)
         return ((int)n);
 
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_NOT, "Cert verify mode, s->verify_mode: 0x%02x", s->verify_mode);
+#endif
+
     if (s->s3->tmp.message_type == SSL3_MT_CLIENT_KEY_EXCHANGE) {
         if ((s->verify_mode & SSL_VERIFY_PEER) &&
             (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) {
@@ -3575,6 +3587,10 @@ int ssl3_get_client_certificate(SSL *s)
 
     if (sk_X509_num(sk) <= 0) {
         /* TLS does not mind 0 certs returned */
+#ifdef GRANDSTREAM_NETWORKS
+        ssl_log(SSL_LOG_NOT, "Cert verify mode, s->verify_mode: 0x%02x", s->verify_mode);
+#endif
+
         if (s->version == SSL3_VERSION) {
             al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,

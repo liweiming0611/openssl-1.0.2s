@@ -674,6 +674,10 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
         goto err;               /* treat like cache miss */
     }
 
+#ifdef GRANDSTREAM_NETWORKS
+    ssl_log(SSL_LOG_NOT, "Cert verify mode, s->verify_mode: 0x%02x", s->verify_mode);
+#endif
+
     if ((s->verify_mode & SSL_VERIFY_PEER) && s->sid_ctx_length == 0) {
         /*
          * We can't be sure if this session is being used out of context,

@@ -520,9 +520,13 @@ static void x509v3_cache_extensions(X509 *x)
     char subjectname[256] = {0};
     char issuername[256] = {0};
     ssl_log(SSL_LOG_NOT, "Does subject name match issuer ?");
-    ssl_log(SSL_LOG_NOT, " subjectnaem: %s", X509_NAME_oneline(X509_get_subject_name(x), subjectname, sizeof(subjectname)));
-    ssl_log(SSL_LOG_NOT, "  issuername: %s", X509_NAME_oneline(X509_get_issuer_name(x), issuername, sizeof(issuername)));
-    ssl_log(SSL_LOG_NOT, "serialnumber: %lu", ASN1_INTEGER_get(X509_get_serialNumber(x)));
+    ssl_log(SSL_LOG_NOT, "\n"
+        "\t subjectnaem: %s\n"
+        "\t  issuername: %s\n"
+        "\tserialnumber: %lu",
+        X509_NAME_oneline(X509_get_subject_name(x), subjectname, sizeof(subjectname)),
+        X509_NAME_oneline(X509_get_issuer_name(x), issuername, sizeof(issuername)),
+        ASN1_INTEGER_get(X509_get_serialNumber(x)));
 #endif
     if (!X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x))) {
         x->ex_flags |= EXFLAG_SI;
@@ -649,8 +653,19 @@ static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x,
                                     int ca)
 {
 #ifdef GRANDSTREAM_NETWORKS
-    ssl_log(SSL_LOG_DEB, "%s enter ...", __FUNCTION__);
+    char subjectname[256] = {0};
+    char issuername[256] = {0};
+    X509 *y = (X509 *)x;
+
+    ssl_log(SSL_LOG_NOT, "\n"
+        "\t subjectnaem: %s, ca: %d\n"
+        "\t  issuername: %s, ca: %d\n"
+        "\tserialnumber: %lu, ca: %d",
+        X509_NAME_oneline(X509_get_subject_name(y), subjectname, sizeof(subjectname)), ca,
+        X509_NAME_oneline(X509_get_issuer_name(y), issuername, sizeof(issuername)), ca,
+        ASN1_INTEGER_get(X509_get_serialNumber(y)), ca);
 #endif
+
 
     if (xku_reject(x, XKU_SSL_SERVER | XKU_SGC))
         return 0;
