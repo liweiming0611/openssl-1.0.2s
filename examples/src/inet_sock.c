@@ -111,7 +111,7 @@ int init_udp_sockaddr(struct sockaddr *sockaddr, inet_sock_t sock, int sockfd, i
         memcpy(sockaddr, &addr, sizeof(addr));
     }
 
-    if((setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on))) < 0) {
+    if((setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_BROADCAST, &on, sizeof(on))) < 0) {
         openssl_log(OPENSSL_LOG_ERR, "%s\n", strerror(errno));
         return -1;
     }

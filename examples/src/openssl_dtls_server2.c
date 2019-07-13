@@ -91,6 +91,7 @@ int main(int argc, char **argv)
                 openssl_log(OPENSSL_LOG_DEB, "Write '%d' bytes to '%s:%d', first byte value: 0x%x(%d)\n",
                     readbytes, inet_ntoa(their_addr.sin_addr), ntohs(their_addr.sin_port), readbuf[0], readbuf[0]);
             }
+            usleep(500);
         }
     }
 

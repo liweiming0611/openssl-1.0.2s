@@ -1,41 +1,30 @@
-#ifdef GRANDSTREAM_NETWORKS
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <string.h>
+#include <errno.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
-#include <openssl.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/ssl_log.h>
 
-static void openssl_log_format(int level, const char *file, int line, const char *msg)
-{
-    int openssl_level = 0;
+#include <config.h>
 
-    switch (level) {
-    case SSL_LOG_ERR:
-        openssl_level = OPENSSL_LOG_ERR;
-        break;
-    case SSL_LOG_WAR:
-        openssl_level = OPENSSL_LOG_WAR;
-        break;
-    case SSL_LOG_NOT:
-        openssl_level = OPENSSL_LOG_NOT;
-        break;
-    case SSL_LOG_DEB:
-        openssl_level = OPENSSL_LOG_DEB;
-        break;
-    case SSL_LOG_VEB:
-        openssl_level = OPENSSL_LOG_VEB;
-        break;
-    default:
-        openssl_level = OPENSSL_LOG_DEB;
-        break;
-    }
+#define CLIENT_CA   "ClientCAcert.pem"
+#define CLIENT_KEY  "ClientPrivkey.pem"
+#define CA          "ca.crt"
 
-    openssl_log(openssl_level, "[%6s:%04d] %s\n", file, line, msg);
-}
+enum {
+    LOG_ERR = 1,
+    LOG_WAR = 2,
+    LOG_NOT = 3,
+    LOG_DEB = 4,
+    LOG_VEB = 5,
+};
 
-void openssl_log_init(void)
-{
-    ssl_set_logger_cb(openssl_log_format);
-}
-
-void openssl_log_vsprintf(int level, const char *file, int line, const char *format, ...)
+static void openssl_log_vsprintf(int level, const char *file, int line, const char *format, ...)
 {
     char *log_buffer = NULL;
     char *file_name = NULL;
@@ -43,11 +32,11 @@ void openssl_log_vsprintf(int level, const char *file, int line, const char *for
     struct timeval tv_now;
     time_t tt;
     struct tm *t = NULL;
-    int i = 0, j = 0, ret = 0;
+    int i = 0, j = 0;
 
     va_list ap;
     va_start(ap, format);
-    ret = vasprintf(&log_buffer, format, ap);
+    int ret = vasprintf(&log_buffer, format, ap);
     va_end(ap);
 
     if (file) {
@@ -55,19 +44,19 @@ void openssl_log_vsprintf(int level, const char *file, int line, const char *for
     }
 
     switch (level) {
-    case OPENSSL_LOG_ERR:
+    case LOG_ERR:
         level_str = "\033[31;1m  ERROR\33[0m";
         break;
-    case OPENSSL_LOG_WAR:
+    case LOG_WAR:
         level_str = "\033[32;31;1mWARRING\33[0m";
         break;
-    case OPENSSL_LOG_NOT:
+    case LOG_NOT:
         level_str = "\033[33;1m NOTICE\33[0m";
         break;
-    case OPENSSL_LOG_DEB:
+    case LOG_DEB:
         level_str = "\033[32;1m  DEBUG\33[0m";
         break;
-    case OPENSSL_LOG_VEB:
+    case LOG_VEB:
         level_str = "\033[32mVERBOSE\33[0m";
         break;
     default:
@@ -95,6 +84,39 @@ void openssl_log_vsprintf(int level, const char *file, int line, const char *for
     }
 }
 
+#define openssl_log(level, ...) do {                                    \
+    if (level) {                                                        \
+        openssl_log_vsprintf(level, __FILE__, __LINE__, __VA_ARGS__);   \
+    }                                                                   \
+} while (0)
+
+static void openssl_log_format(int level, const char *file, int line, const char *msg)
+{
+    int openssl_level = 0;
+
+    switch (level) {
+    case SSL_LOG_ERR:
+        openssl_level = LOG_ERR;
+        break;
+    case SSL_LOG_WAR:
+        openssl_level = LOG_WAR;
+        break;
+    case SSL_LOG_NOT:
+        openssl_level = LOG_NOT;
+        break;
+    case SSL_LOG_DEB:
+        openssl_level = LOG_DEB;
+        break;
+    case SSL_LOG_VEB:
+        openssl_level = LOG_VEB;
+        break;
+    default:
+        openssl_level = LOG_DEB;
+        break;
+    }
+
+    openssl_log(openssl_level, "[%6s:%04d] %s\n", file, line, msg);
+}
 
 static void openssl_msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg)
 {
@@ -402,135 +424,128 @@ static void openssl_msg_cb(int write_p, int version, int content_type, const voi
         msg_len += snprintf(msg_buffer + msg_len, sizeof(msg_buffer) - msg_len - 1, "%s", "\n");
     }
 
-    openssl_log(OPENSSL_LOG_DEB, "\n%s", msg_buffer);
+    openssl_log(LOG_DEB, "\n%s", msg_buffer);
 }
 
-int openssl_init(void)
+static int connect_to_baidu(int sockfd, struct sockaddr *sockaddr, size_t len)
 {
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+
+    if (connect(sockfd, sockaddr, len)) {
+        openssl_log(LOG_ERR, "%s\n", strerror(errno));
+        return -1;
+    }
+
+    ssl_set_logger_cb(openssl_log_format);
     SSL_library_init();
     OpenSSL_add_all_algorithms();
     SSL_load_error_strings();
-}
 
-#define SERVER_CA   "ServerCAcert.pem"
-#define SERVER_KEY  "ServerPrivkey.pem"
-
-#define CLIENT_CA   "ClientCAcert.pem"
-#define CLIENT_KEY  "ClientPrivkey.pem"
-
-#define CA          "ca.crt"
-
-int openssl_load_cert_file(SSL_CTX *ctx, int csopt)
-{
-    if (csopt) {
-        if (SSL_CTX_use_certificate_file(ctx, OPENSSL_SERVER_CA_PATH "/" SERVER_CA, SSL_FILETYPE_PEM) <= 0) {
-            ERR_print_errors_fp(stdout);
-            return -1;
-        }
-
-        if (SSL_CTX_use_PrivateKey_file(ctx, OPENSSL_SERVER_CA_PATH "/" SERVER_KEY, SSL_FILETYPE_PEM) <= 0) {
-            ERR_print_errors_fp(stdout);
-            return -1;
-        }
-    } else {
-        if (SSL_CTX_use_certificate_file(ctx, OPENSSL_CLIENT_CA_PATH "/" CLIENT_CA, SSL_FILETYPE_PEM) <= 0) {
-            ERR_print_errors_fp(stdout);
-            return -1;
-        }
-
-        if (SSL_CTX_use_PrivateKey_file(ctx, OPENSSL_CLIENT_CA_PATH "/" CLIENT_KEY, SSL_FILETYPE_PEM) <= 0) {
-            ERR_print_errors_fp(stdout);
-            return -1;
-        }
+    ctx = SSL_CTX_new(SSLv23_method());
+    if (!ctx) {
+        openssl_log(LOG_ERR, "%s\n", strerror(errno));
+        goto error;
     }
 
+    if (SSL_CTX_use_certificate_file(ctx, OPENSSL_CLIENT_CA_PATH "/" CLIENT_CA, SSL_FILETYPE_PEM) <= 0) {
+        openssl_log(LOG_ERR, "%s\n", strerror(errno));
+        goto error;
+    }
+
+    if (SSL_CTX_use_PrivateKey_file(ctx, OPENSSL_CLIENT_CA_PATH "/" CLIENT_KEY, SSL_FILETYPE_PEM) <= 0) {
+        openssl_log(LOG_ERR, "%s\n", strerror(errno));
+        goto error;
+    }
+
+    
     if (!SSL_CTX_check_private_key(ctx)) {
-        ERR_print_errors_fp(stdout);
-        return -1;
+        openssl_log(LOG_ERR, "%s\n", strerror(errno));
+        goto error;
     }
 
     if (!SSL_CTX_load_verify_locations(ctx, OPENSSL_CA_PATH "/" CA, NULL)) {
-        ERR_print_errors_fp(stdout);
-        return -1;
+        openssl_log(LOG_ERR, "%s\n", strerror(errno));
+        goto error;
     }
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
 
     if (!SSL_CTX_set_default_verify_paths(ctx)) {
-        ERR_print_errors_fp(stdout);
-        return -1;
+        openssl_log(LOG_ERR, "%s\n", strerror(errno));
+        goto error;
+    }
+
+    ssl = SSL_new(ctx);
+    if (!ssl) {
+        openssl_log(LOG_ERR, "%s\n", strerror(errno));
+        goto error;
+    }
+    SSL_set_fd(ssl, sockfd);
+    SSL_set_msg_callback(ssl, openssl_msg_cb);
+
+    if (-1 == SSL_connect(ssl)) {
+        openssl_log(LOG_ERR, "error in %s\n", SSL_state_string_long(ssl));
+        goto error;
+    } else {
+        openssl_log(LOG_DEB, "SSL connection using %s\n", SSL_get_cipher (ssl));
+    }
+
+    if (ctx) {
+        SSL_CTX_free(ctx);
     }
 
     return 0;
+
+error:
+    if (ctx) {
+        SSL_CTX_free(ctx);
+    }
+    return -1;
 }
 
-static void openssl_info_callback(const SSL *s, int where, int ret)
+int main(int argc, char **argv)
 {
-    const char *str;
-    int w;
+    struct addrinfo hints, *result = NULL, *rp = NULL;
+    struct sockaddr sockaddr;
+    int sockfd = -1;
+    struct sockaddr_in addr4;
+    struct sockaddr_in6 addr6;
 
-    w = where & ~SSL_ST_MASK;
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = 0;
+    hints.ai_protocol = 0;
 
-    if (w & SSL_ST_CONNECT) {
-        str = "SSL_connect";
-    } else if (w & SSL_ST_ACCEPT) {
-        str = "SSL_accept";
-    } else {
-        str = "undefined";
+    if (getaddrinfo("www.baidu.com", NULL, &hints, &result)) {
+        openssl_log(LOG_ERR, "%s\n", strerror(errno));
+        return -1;
     }
+    memset(&sockaddr, 0, sizeof(sockaddr));
 
-    if (where & SSL_CB_LOOP) {
-        openssl_log(SSL_LOG_DEB, "%s: %s\n", str, SSL_state_string_long(s));
-    } else if (where & SSL_CB_ALERT) {
-        str = (where & SSL_CB_READ) ? "read" : "write";
-        openssl_log(SSL_LOG_DEB, "SSL3 alert %s:%s:%s\n", str,
-                   SSL_alert_type_string_long(ret),
-                   SSL_alert_desc_string_long(ret));
-    } else if (where & SSL_CB_EXIT) {
-        if (ret == 0) {
-            openssl_log(SSL_LOG_ERR, "%s:failed in %s\n", str, SSL_state_string_long(s));
-        } else if (ret < 0) {
-            openssl_log(SSL_LOG_ERR, "%s:error in %s\n", str, SSL_state_string_long(s));
+    for (rp = result; rp != NULL; rp = rp->ai_next) {
+        sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+        if (sockfd < 0) {
+            openssl_log(LOG_ERR, "%s\n", strerror(errno));
+            continue;
+        }
+
+        if (AF_INET == rp->ai_family) {
+            memcpy(&addr4, rp->ai_addr, rp->ai_addrlen);
+            addr4.sin_port = htons(443);
+            openssl_log(LOG_DEB, "Get www.baidu.com ip address: %s:%d, sockfd: %d\n",
+                inet_ntoa(addr4.sin_addr), ntohs(addr4.sin_port), sockfd);
+            if (connect_to_baidu(sockfd, (struct sockaddr *)&addr4, sizeof(addr4))) {
+                close(sockfd);
+                continue;
+            } else {
+                break;
+            }
         }
     }
+
+    close(sockfd);
+    freeaddrinfo(result);
+
+    return 0;
 }
-
-SSL_CTX *openssl_ctx_new(const SSL_METHOD *method)
-{
-    SSL_CTX *ctx = NULL;
-
-    ctx = SSL_CTX_new(method);
-    if (NULL == ctx) {
-        ERR_print_errors_fp(stdout);
-        return NULL;
-    }
-
-    SSL_CTX_set_info_callback(ctx, openssl_info_callback);
-
-    return ctx;
-}
-
-SSL *openssl_ssl_new(SSL_CTX *ctx)
-{
-    SSL *ssl = NULL;
-
-    ssl = SSL_new(ctx);
-    if (NULL == ssl) {
-        return NULL;
-    }
-
-    SSL_set_msg_callback(ssl, openssl_msg_cb);
-    SSL_set_msg_callback_arg(ssl, NULL);
-
-    return ssl;
-}
-
-int openssl_set_fd(SSL *ssl, int sockfd)
-{
-    return SSL_set_fd(ssl, sockfd);
-}
-
-int openssl_accept(SSL *ssl)
-{
-    return SSL_accept(ssl);
-}
-#endif

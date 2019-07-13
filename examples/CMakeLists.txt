@@ -156,6 +156,14 @@ TARGET_LINK_LIBRARIES(openssl_dtls_server2
     ${CRYPTO_LIBRARY}
 )
 
+ADD_EXECUTABLE(openssl_https_baidu
+    ${SOURCE_PATH}/openssl_https_baidu.c)
+
+TARGET_LINK_LIBRARIES(openssl_https_baidu
+    ${SSL_LIBRARY}
+    ${CRYPTO_LIBRARY}
+)
+
 INSTALL(PROGRAMS
     ${CMAKE_BINARY_DIR}/openssl_v23_server
     ${CMAKE_BINARY_DIR}/openssl_v23_client
@@ -163,6 +171,7 @@ INSTALL(PROGRAMS
     ${CMAKE_BINARY_DIR}/openssl_dtls_server2
     ${CMAKE_BINARY_DIR}/openssl_dtls_client
     ${CMAKE_BINARY_DIR}/openssl_dtls_client2
+    ${CMAKE_BINARY_DIR}/openssl_https_baidu
     DESTINATION
     ${CMAKE_INSTALL_PREFIX}/sbin)
 

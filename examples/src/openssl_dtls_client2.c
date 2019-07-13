@@ -1,4 +1,6 @@
 #include <poll.h>
+#include <string.h>
+#include <errno.h>
 
 #include <openssl.h>
 #include <inet_sock.h>
@@ -85,13 +87,14 @@ int main(int argc, char **argv)
                     }
                 }
             }
+            usleep(500);
         } else if (retval && (fds.revents & POLLOUT)) {
             if (!SSL_is_init_finished(ssl)) {
                 readbytes = BIO_read(write_bio, readbuf, sizeof(readbuf));
                 if (readbytes > 0) {
                     readbytes = sendto(sockfd, readbuf, readbytes, 0, &my_addr, socklen);
-                    openssl_log(OPENSSL_LOG_DEB, "Write '%d' bytes to '%s:%d', values: %d, first byte value: 0x%x(%d)\n",
-                        readbytes, inet_ntoa(my_addr.sin_addr), ntohs(my_addr.sin_port), readbuf[0], readbuf[0]);
+                    openssl_log(OPENSSL_LOG_DEB, "Write '%d' bytes to '%s:%d', sockfd: %d, first byte value: 0x%x, error: %s\n",
+                        readbytes, inet_ntoa(my_addr.sin_addr), ntohs(my_addr.sin_port), sockfd, readbuf[0], strerror(errno));
                 }
             } else {
                 snprintf(readbuf, sizeof(readbuf) - 1, "%s", "This is a DTLS client!");
@@ -103,6 +106,8 @@ int main(int argc, char **argv)
                         readbytes, inet_ntoa(my_addr.sin_addr), ntohs(my_addr.sin_port), readbuf[0], readbuf[0]);
                 }
             }
+
+            usleep(500000);
         }
     }
 
