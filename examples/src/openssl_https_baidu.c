@@ -24,6 +24,50 @@ enum {
     LOG_VEB = 5,
 };
 
+static int openssl_elim_spec_string(char *data, char delim, char **array, int arraylen);
+#define openssl_arraylen(array) (sizeof(array) / sizeof(array[0]))
+#define openssl_elim_string(data, delim, array) openssl_elim_spec_string((data), (delim), (array), openssl_arraylen(array))
+
+static int openssl_string_char_delim(char *data, char delim, char **array, int arraylen)
+{
+    int count = 0;
+    char *ptr = data;
+
+    enum tokenizer_state {
+        START,
+        FIND_DELIM
+    } state = START;
+
+    while (*ptr && (count < arraylen)) {
+        switch (state) {
+        case START:
+            array[count++] = ptr;
+            state = FIND_DELIM;
+            break;
+        case FIND_DELIM:
+            if (delim == *ptr) {
+                *ptr = '\0';
+                state = START;
+            }
+            ++ptr;
+            break;
+        }
+    }
+
+    return count;
+}
+
+static int openssl_elim_spec_string(char *data, char delim, char **array, int arraylen)
+{
+    if (!data || !array || !arraylen) {
+        return 0;
+    }
+
+    memset(array, 0, arraylen * sizeof(*array));
+
+    return openssl_string_char_delim(data, delim, array, arraylen);
+}
+
 static void openssl_log_vsprintf(int level, const char *file, int line, const char *format, ...)
 {
     char *log_buffer = NULL;
@@ -32,7 +76,12 @@ static void openssl_log_vsprintf(int level, const char *file, int line, const ch
     struct timeval tv_now;
     time_t tt;
     struct tm *t = NULL;
-    int i = 0, j = 0;
+    int i = 0;
+    int argc = 0;
+    char *dupstr = NULL;
+    char *lines[1024] = {0};
+    char buffer[65535] = {0};
+    int bufferlen = 0;
 
     va_list ap;
     va_start(ap, format);
@@ -68,16 +117,19 @@ static void openssl_log_vsprintf(int level, const char *file, int line, const ch
     t = localtime(&tt);
     gettimeofday(&tv_now, NULL);
 
-    for (i = ret - 3; i < ret; i++) {
-        if ('\n' == log_buffer[i]) {
-            j++;
+    argc = openssl_elim_string((dupstr = strdup(log_buffer)), '\n', lines);
+    for (i = 0; i < argc; i++) {
+        if (strlen(lines[i])) {
+            bufferlen += snprintf(buffer + bufferlen, sizeof(buffer) - bufferlen, "%s\n", lines[i]);
         }
     }
-    log_buffer[ret - j + 1] = '\0';
-
-    fprintf(stderr, "[%4d-%02d-%02d %02d:%02d:%02d:%03ld] %s [%05ld] -- %s:%d %s\n",
+    fprintf(stderr, "[%4d-%02d-%02d %02d:%02d:%02d:%03ld] %s [%05ld] -- %s:%d %s",
         t->tm_year+1900, t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, tv_now.tv_usec,
-        level_str, syscall(SYS_gettid), file_name ? ++file_name : file, line, log_buffer);
+        level_str, syscall(SYS_gettid), file_name ? ++file_name : file, line, buffer);
+
+    if (dupstr) {
+        free(dupstr);
+    }
 
     if (log_buffer) {
         free(log_buffer);
@@ -490,6 +542,10 @@ static int connect_to_baidu(int sockfd, struct sockaddr *sockaddr, size_t len)
         openssl_log(LOG_DEB, "SSL connection using %s\n", SSL_get_cipher (ssl));
     }
 
+    if (ssl) {
+        SSL_free(ssl);
+    }
+
     if (ctx) {
         SSL_CTX_free(ctx);
     }
@@ -497,6 +553,10 @@ static int connect_to_baidu(int sockfd, struct sockaddr *sockaddr, size_t len)
     return 0;
 
 error:
+    if (ssl) {
+        SSL_free(ssl);
+    }
+
     if (ctx) {
         SSL_CTX_free(ctx);
     }
@@ -533,7 +593,7 @@ int main(int argc, char **argv)
         if (AF_INET == rp->ai_family) {
             memcpy(&addr4, rp->ai_addr, rp->ai_addrlen);
             addr4.sin_port = htons(443);
-            openssl_log(LOG_DEB, "Get www.baidu.com ip address: %s:%d, sockfd: %d\n",
+            openssl_log(LOG_DEB, "Get www.baidu.com ip address: %s:%d, sockfd: %d",
                 inet_ntoa(addr4.sin_addr), ntohs(addr4.sin_port), sockfd);
             if (connect_to_baidu(sockfd, (struct sockaddr *)&addr4, sizeof(addr4))) {
                 close(sockfd);
